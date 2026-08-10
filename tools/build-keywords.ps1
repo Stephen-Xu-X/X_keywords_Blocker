@@ -1,4 +1,4 @@
-param(
+﻿param(
   [string]$Source = (Join-Path $PSScriptRoot '..\keywords-research-sol.md'),
   [string]$Output = (Join-Path $PSScriptRoot '..\keywords.md')
 )
