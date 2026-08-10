@@ -192,7 +192,7 @@
         <main class="xmks-view" data-view-panel="add" data-active="true"><label class="xmks-label" for="xmks-input">屏蔽词或短语</label><textarea id="xmks-input" class="xmks-textarea" placeholder="广告\n色情\n推广"></textarea><div class="xmks-hint"><span>支持换行、逗号和分号</span><span class="xmks-count">0 个</span></div>
           <div class="xmks-options"><fieldset class="xmks-fieldset"><legend class="xmks-legend">Mute from</legend><div class="xmks-option-stack"><label class="xmks-option"><input id="xmks-home" type="checkbox" checked>Home timeline</label><label class="xmks-option"><input id="xmks-notifications" type="checkbox" checked>Notifications</label></div></fieldset>
           <fieldset class="xmks-fieldset"><legend class="xmks-legend">Notification source</legend><div class="xmks-option-stack"><label class="xmks-option"><input type="radio" name="xmks-source" value="anyone">From anyone</label><label class="xmks-option"><input type="radio" name="xmks-source" value="non_following" checked>From people you don’t follow</label></div></fieldset>
-          <fieldset class="xmks-fieldset"><legend class="xmks-legend">Mute timing</legend><select id="xmks-duration" class="xmks-duration-select"><option value="">Forever</option><option value="86400">24 hours</option><option value="604800">7 days</option><option value="2592000">30 days</option></select></fieldset></div>
+          <fieldset class="xmks-fieldset"><legend class="xmks-legend">Mute timing</legend><select id="xmks-duration" class="xmks-duration-select"><option value="">Forever</option><option value="86400000">24 hours</option><option value="604800000">7 days</option><option value="2592000000">30 days</option></select></fieldset></div>
           <section class="xmks-progress"><div class="xmks-track"><div class="xmks-bar"></div></div><div class="xmks-summary"></div><div class="xmks-log"></div></section></main>
         <main class="xmks-view" data-view-panel="presets"><div class="xmks-preset-tools"><span>点击词条选择，再批量添加</span><button id="xmks-clear-presets" class="xmks-btn">清除选择</button></div><div class="xmks-presets"></div></main>
         <main class="xmks-view" data-view-panel="manage"><div class="xmks-toolbar"><label class="xmks-search">${icon('search',18)}<input id="xmks-search" placeholder="搜索屏蔽词"></label><button id="xmks-refresh" class="xmks-iconbtn" title="刷新词库">${icon('refresh')}</button></div><div class="xmks-list"></div></main>
@@ -258,8 +258,12 @@
       let timing = 'Forever';
       if (item.valid_until) {
         const remaining = Math.max(0, Number(item.valid_until) - Date.now());
-        const days = Math.ceil(remaining / 86400000);
-        timing = days <= 1 ? '24 hours' : days <= 7 ? '7 days' : '30 days';
+        const hours = remaining / 3600000;
+        const days = remaining / 86400000;
+        if (hours < 20) timing = hours >= 1 ? `Ends in ${Math.ceil(hours)}h` : `Ends in ${Math.max(1, Math.ceil(remaining / 60000))}m`;
+        else if (days < 2) timing = '24 hours';
+        else if (days < 10) timing = '7 days';
+        else timing = '30 days';
       }
       badges.push([timing, 'time']);
       return badges.map(([label, tone]) => `<span class="xmks-badge ${tone ? `xmks-badge-${tone}` : ''}">${label}</span>`).join('');

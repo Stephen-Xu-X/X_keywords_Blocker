@@ -30,9 +30,9 @@
 | From anyone | `mute_options=` |
 | From people you don't follow | `mute_options=exclude_following_accounts` |
 | Forever | `duration=` |
-| 24 hours | `duration=86400` |
-| 7 days | `duration=604800` |
-| 30 days | `duration=2592000` |
+| 24 hours | `duration=86400000` |
+| 7 days | `duration=604800000` |
+| 30 days | `duration=2592000000` |
 
 ## 默认词库
 
