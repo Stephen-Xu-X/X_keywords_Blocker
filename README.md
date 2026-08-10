@@ -4,7 +4,7 @@
 
 ## 安装
 
-安装 `x-keywords-blocker.user.js` 到 Tampermonkey。脚本本身可独立运行，并从 GitHub Raw 读取 `keywords.md`；远程读取失败时会回退到内置词库。
+安装 `x-keywords-blocker-v2.user.js` 到 Tampermonkey。V2 脚本本身可独立运行，并从 GitHub Raw 读取 `keywords.md`；远程读取失败时会回退到上一次可用词库或内置词库。原 `x-keywords-blocker.user.js` 保留作为回退版本。
 
 ## Studio 功能
 
@@ -16,6 +16,9 @@
 - 搜索、多选、单项删除和批量删除。
 - 按类别展示默认词库，以胶囊形式选择后批量添加。
 - 请求间隔 0.5 秒，支持停止与逐项结果。
+- 默认词库同步、执行前参数确认、重复词预检查和失败项重试。
+- 任务托盘显示成功、已存在、失败和未执行队列；停止操作只停止剩余队列。
+- Shadow DOM 样式隔离、移动端底部 Sheet 和键盘焦点支持。
 
 ## 请求参数
 
