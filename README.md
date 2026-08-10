@@ -4,7 +4,7 @@
 
 ## 安装
 
-安装 `x-keywords-blocker-v2.user.js` 到 Tampermonkey。V2 脚本本身可独立运行，并从 GitHub Raw 读取 `keywords.md`；远程读取失败时会回退到上一次可用词库或内置词库。原 `x-keywords-blocker.user.js` 保留作为回退版本。
+安装 `x-keywords-blocker-v2.user.js` 到 Tampermonkey。V2 只从 GitHub Raw 读取 `keywords.md`，不内置任何屏蔽词；远程词库首次加载失败时保持空状态，已有远程版本刷新失败时保留上次成功版本。原 `x-keywords-blocker.user.js` 保留作为回退版本。
 
 ## Studio 功能
 
