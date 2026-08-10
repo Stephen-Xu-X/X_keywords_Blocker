@@ -1,11 +1,13 @@
 // ==UserScript==
 // @name         X Muted Keywords Studio (Debug)
 // @namespace    https://x.com/
-// @version      0.3.0
+// @version      0.3.1
 // @description  Standalone UI for adding, browsing, and deleting X muted keywords.
 // @match        https://x.com/*
 // @run-at       document-idle
-// @grant        none
+// @grant        GM.xmlHttpRequest
+// @grant        unsafeWindow
+// @connect      raw.githubusercontent.com
 // ==/UserScript==
 
 (() => {
@@ -20,6 +22,7 @@
   const KEYWORDS_URL = 'https://raw.githubusercontent.com/Stephen-Xu-X/X_keywords_Blocker/main/keywords.md';
   const DELAY = 500;
   const BEARER = 'AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs%3D1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA';
+  const pageWindow = typeof unsafeWindow === 'undefined' ? window : unsafeWindow;
   let runtimeRequire;
   let running = false;
   let stopped = false;
@@ -38,6 +41,7 @@
     },
   ];
   let presetCategories = DEFAULT_CATEGORIES;
+  let presetSource = '内置词库';
 
   const icon = (name, size = 20) => {
     const paths = {
@@ -85,17 +89,38 @@
   async function loadPresetCategories() {
     if (!KEYWORDS_URL) return DEFAULT_CATEGORIES;
     try {
-      const response = await fetch(KEYWORDS_URL, { cache: 'no-store' });
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      return parseKeywordMarkdown(await response.text());
+      let markdown;
+      if (typeof GM !== 'undefined' && typeof GM.xmlHttpRequest === 'function') {
+        markdown = await new Promise((resolve, reject) => {
+          GM.xmlHttpRequest({
+            method: 'GET',
+            url: `${KEYWORDS_URL}?t=${Date.now()}`,
+            timeout: 15000,
+            onload: (response) => response.status >= 200 && response.status < 300
+              ? resolve(response.responseText)
+              : reject(new Error(`HTTP ${response.status}`)),
+            onerror: () => reject(new Error('远程词库请求失败')),
+            ontimeout: () => reject(new Error('远程词库请求超时')),
+          });
+        });
+      } else {
+        const response = await fetch(KEYWORDS_URL, { cache: 'no-store' });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        markdown = await response.text();
+      }
+      const categories = parseKeywordMarkdown(markdown);
+      if (!categories.length) throw new Error('远程词库格式无效');
+      presetSource = 'GitHub 远程词库';
+      return categories;
     } catch {
+      presetSource = '内置词库（远程加载失败）';
       return DEFAULT_CATEGORIES;
     }
   }
 
   function getRequire() {
     if (runtimeRequire) return runtimeRequire;
-    const chunks = window.webpackChunk_twitter_responsive_web;
+    const chunks = pageWindow.webpackChunk_twitter_responsive_web;
     if (!chunks) throw new Error('X 主程序尚未加载，请稍后重试');
     chunks.push([[Math.floor(Math.random() * 1e9)], {}, (value) => { runtimeRequire = value; }]);
     if (!runtimeRequire) throw new Error('无法访问 X 请求模块');
@@ -296,7 +321,7 @@
       $$('.xmks-view').forEach((element) => { element.dataset.active = String(element.dataset.viewPanel === view); });
       const titles = { add: '批量添加', presets: '默认词库', manage: '管理词库' };
       $('.xmks-heading').textContent = titles[view];
-      $('.xmks-subtitle').textContent = view === 'add' ? '每条请求间隔 0.5 秒' : view === 'presets' ? `${presetSelected.size} 个已选择` : `${keywords.length} 个屏蔽词`;
+      $('.xmks-subtitle').textContent = view === 'add' ? '每条请求间隔 0.5 秒' : view === 'presets' ? `${presetSelected.size} 个已选择 · ${presetSource}` : `${keywords.length} 个屏蔽词`;
       run.hidden = view === 'manage';
       run.innerHTML = view === 'presets' ? `${icon('plus',17)}添加所选` : `${icon('plus',17)}开始添加`;
       remove.hidden = view !== 'manage' || selected.size === 0;
@@ -379,7 +404,7 @@
       const word = chip.dataset.word;
       presetSelected.has(word) ? presetSelected.delete(word) : presetSelected.add(word);
       chip.dataset.selected = String(presetSelected.has(word));
-      $('.xmks-subtitle').textContent = `${presetSelected.size} 个已选择`;
+      $('.xmks-subtitle').textContent = `${presetSelected.size} 个已选择 · ${presetSource}`;
     };
     stop.onclick = () => { stopped = true; setStatus('正在停止…'); };
     remove.onclick = () => removeIds([...selected]);
@@ -442,6 +467,7 @@
     loadPresetCategories().then((categories) => {
       presetCategories = categories;
       renderPresets();
+      if (activeView === 'presets') $('.xmks-subtitle').textContent = `${presetSelected.size} 个已选择 · ${presetSource}`;
     });
     renderPresets();
   }
