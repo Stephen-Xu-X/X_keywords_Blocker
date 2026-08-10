@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         X Muted Keywords Studio (Debug)
+// @name         X Keywords Blocker
 // @namespace    https://x.com/
 // @version      0.3.1
-// @description  Standalone UI for adding, browsing, and deleting X muted keywords.
+// @description  Batch add, browse, configure, and delete X muted keywords.
 // @match        https://x.com/*
 // @run-at       document-idle
 // @grant        GM.xmlHttpRequest

@@ -2,13 +2,9 @@
 
 一个运行在 `x.com` 页面内的开源 Tampermonkey 工具，用于批量添加、查看和删除 X 屏蔽词。请求直接发送到 X，不经过第三方服务器。
 
-## 文件
+## 安装
 
-- `x-muted-keywords-batch.user.js`：已验证可用的基础批量添加版。
-- `x-muted-keywords-studio.debug.user.js`：正在迭代的 Studio 版，包含完整参数、词库和管理界面。
-- `keywords.md`：分类默认词库；GitHub Raw 发布后由 Studio 优先读取。
-
-两个用户脚本都是单文件，不依赖仓库内其他文件运行。Studio 无法读取 Raw 文件时会回退到脚本内置词库。
+安装 `x-keywords-blocker.user.js` 到 Tampermonkey。脚本本身可独立运行，并从 GitHub Raw 读取 `keywords.md`；远程读取失败时会回退到内置词库。
 
 ## Studio 功能
 
@@ -42,12 +38,16 @@ Studio 配置的 Raw 地址：
 https://raw.githubusercontent.com/Stephen-Xu-X/X_keywords_Blocker/main/keywords.md
 ```
 
-格式：
+格式：三级标题表示分类，四级标题表示说明，只有反引号包裹的列表项会被加载：
 
 ```markdown
-## 分类名称
+### 分类名称
 
-词一、词二、word three
+#### 分类说明
+
+- `词一`
+- `词二`
+- `word three`
 ```
 
 用户可以 Fork 仓库并修改 `keywords.md`，再将脚本中的 `KEYWORDS_URL` 改为自己的 Raw 地址。
