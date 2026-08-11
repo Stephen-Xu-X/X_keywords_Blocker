@@ -2,7 +2,7 @@
 // @name         X Keywords Blocker V2
 // @namespace    https://x.com/
 // @author       Stephen-Xu-X
-// @version      3.1.4
+// @version      3.1.6
 // @description  A safe, configurable workspace for adding, syncing, browsing, and deleting X muted keywords.
 // @match        https://x.com/*
 // @run-at       document-idle
@@ -787,19 +787,22 @@ const state = {
     taskClose.onclick = () => { taskPanel.dataset.dismissed = 'true'; };
 
     function positionLauncher() {
-      const exact = document.querySelector('a[href="/home"][aria-label="X"], a[href="/home"][data-testid="AppTabBar_Home_Link"]');
-      const logo = exact || [...document.querySelectorAll('a[href="/home"], a[data-testid*="Home"]')].find((element) => {
+      const isVisible = (element) => {
         const rect = element.getBoundingClientRect();
-        return rect.width > 0 && rect.height > 0;
-      });
-      launcher.hidden = false;
+        const style = getComputedStyle(element);
+        return rect.width > 0 && rect.height > 0 && style.display !== 'none' && style.visibility !== 'hidden';
+      };
+      const exact = [...document.querySelectorAll('a[href="/home"][aria-label="X"], a[href="/home"][data-testid="AppTabBar_Home_Link"]')].find(isVisible);
+      const logo = exact || [...document.querySelectorAll('a[href="/home"], a[data-testid*="Home"]')].find(isVisible);
       if (!logo) {
-        launcher.style.left = 'auto';
-        launcher.style.right = '18px';
-        launcher.style.top = '72px';
+        launcher.hidden = true;
+        launcher.style.left = '';
+        launcher.style.right = '';
+        launcher.style.top = '';
         return;
       }
       const rect = logo.getBoundingClientRect();
+      launcher.hidden = false;
       launcher.style.right = 'auto';
       launcher.style.left = `${Math.round(rect.right + 4)}px`;
       launcher.style.top = `${Math.round(rect.top + (rect.height - 40) / 2)}px`;
