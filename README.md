@@ -4,7 +4,7 @@
 
 ## 安装
 
-安装 `x-keywords-blocker-v2.user.js` 到 Tampermonkey。V2 只从 GitHub Raw 读取 `keywords.md`，不内置任何屏蔽词；远程词库首次加载失败时保持空状态，已有远程版本刷新失败时保留上次成功版本。原 `x-keywords-blocker.user.js` 保留作为回退版本。
+安装 `x-keywords-blocker-v2.user.js` 到 Tampermonkey。V2 只从 GitHub Raw 读取 `keywords.md`，不内置任何屏蔽词；远程词库首次加载失败时保持空状态，已有远程版本刷新失败时保留上次成功版本。
 
 ## Studio 功能
 
@@ -14,9 +14,9 @@
 - 选择 Forever、24 hours、7 days 或 30 days。
 - 读取现有屏蔽词，并显示位置、来源和时长标签。
 - 搜索、多选、单项删除和批量删除。
-- 按类别展示默认词库，以胶囊形式选择后批量添加。
+- 按类别展示远程词库，以胶囊形式选择后批量添加。
 - 请求间隔 0.5 秒，支持停止与逐项结果。
-- 默认词库同步、执行前参数确认、重复词预检查和失败项重试。
+- 远程词库同步、执行前参数确认、重复词预检查和失败项重试。
 - 任务托盘显示成功、已存在、失败和未执行队列；停止操作只停止剩余队列。
 - Shadow DOM 样式隔离、移动端底部 Sheet 和键盘焦点支持。
 
@@ -33,7 +33,7 @@
 | 7 days | `duration=604800000` |
 | 30 days | `duration=2592000000` |
 
-## 默认词库
+## 远程词库
 
 Studio 配置的 Raw 地址：
 
@@ -41,12 +41,10 @@ Studio 配置的 Raw 地址：
 https://raw.githubusercontent.com/Stephen-Xu-X/X_keywords_Blocker/main/keywords.md
 ```
 
-格式：三级标题表示分类，四级标题表示说明，只有反引号包裹的列表项会被加载：
+格式：三级标题表示分类，列表中的反引号内容表示词汇；单字词会被过滤：
 
 ```markdown
 ### 分类名称
-
-#### 分类说明
 
 - `词一`
 - `词二`
