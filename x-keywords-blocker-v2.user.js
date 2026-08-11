@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         X Keywords Blocker V2
 // @namespace    https://x.com/
-// @version      2.0.2
+// @version      2.1.0
 // @description  A safe, configurable workspace for adding, syncing, browsing, and deleting X muted keywords.
 // @match        https://x.com/*
 // @run-at       document-idle
