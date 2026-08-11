@@ -32,6 +32,7 @@ const state = {
     presetSyncedAt: '',
     presetStats: { categories: 0, words: 0, duplicates: 0, invalid: 0, ignored: 0 },
     presetSelected: new Set(),
+    collapsedPresetCategories: new Set(),
     keywords: [],
     selectedIds: new Set(),
     listLoaded: false,
@@ -59,6 +60,8 @@ const state = {
       check: '<path d="m5 12 4 4L19 6"/>',
       alert: '<path d="m12 3 9 18H3L12 3Z"/><path d="M12 9v4m0 4h.01"/>',
       retry: '<path d="M20 11a8 8 0 1 0 2 5"/><path d="M20 5v6h-6"/>',
+      chevron: '<path d="m9 18 6-6-6-6"/>',
+      github: '<path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3.3-.4 6.8-1.6 6.8-7A5.4 5.4 0 0 0 19.4 4 5 5 0 0 0 19.3.5S18.2.1 15 1.8a13.4 13.4 0 0 0-7 0C4.8.1 3.7.5 3.7.5A5 5 0 0 0 3.6 4a5.4 5.4 0 0 0-1.4 3.7c0 5.4 3.5 6.5 6.8 7A4.8 4.8 0 0 0 7.5 18v4"/><path d="M7.5 18c-4.5 2-5-2-7-2"/>',
     };
     return `<svg viewBox="0 0 24 24" width="${size}" height="${size}" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${paths[name] || ''}</svg>`;
   };
@@ -213,10 +216,304 @@ const state = {
     const shadow = host.attachShadow({ mode: 'open' });
     shadow.innerHTML = `
       <style>
-        :host{--bg:#000;--panel:#16181c;--raised:#202327;--line:#2f3336;--line-strong:#536471;--text:#e7e9ea;--muted:#8b98a5;--blue:#1d9bf0;--blue-soft:#0d2f45;--red:#f4212e;--green:#00ba7c;display:contents;color:var(--text);font:14px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",sans-serif;letter-spacing:0}*,*::before,*::after{box-sizing:border-box;letter-spacing:0}button,input,textarea,select{font:inherit}button{color:inherit}#xmks-launch{position:fixed;display:grid;place-items:center;width:40px;height:40px;padding:0;border:0;border-radius:50%;background:transparent;color:#eff3f4;cursor:pointer;z-index:2147483600;transition:background .16s,color .16s,transform .16s}#xmks-launch:hover{background:rgb(239 243 244/.12);color:var(--blue)}#xmks-launch:active{transform:scale(.94)}#xmks-launch[hidden]{display:none}.xmks-overlay{position:fixed;inset:0;z-index:2147483601;display:grid;place-items:center;padding:22px;visibility:hidden;opacity:0;background:rgb(0 0 0/.64);backdrop-filter:blur(6px);transition:opacity .22s,visibility .22s}.xmks-overlay[data-open=true]{visibility:visible;opacity:1}.xmks-window{display:grid;grid-template-columns:172px minmax(0,1fr);width:min(940px,calc(100vw - 44px));height:min(700px,calc(100vh - 44px));overflow:hidden;border:1px solid var(--line);border-radius:12px;background:var(--bg);box-shadow:0 24px 72px rgb(0 0 0/.54);transform:translateY(8px) scale(.985);transition:transform .22s cubic-bezier(.2,.8,.2,1)}.xmks-overlay[data-open=true] .xmks-window{transform:none}.xmks-rail{display:flex;flex-direction:column;min-width:0;padding:16px 10px;border-right:1px solid var(--line);background:#0b0d0f}.xmks-brand{display:flex;align-items:center;gap:9px;padding:4px 8px 18px;font-weight:800}.xmks-brandmark{display:grid;place-items:center;width:28px;height:28px;border-radius:8px;background:var(--text);color:#0f1419}.xmks-tab{display:flex;align-items:center;gap:9px;width:100%;height:42px;margin:2px 0;padding:0 10px;border:0;border-radius:8px;background:transparent;color:var(--muted);font-weight:700;text-align:left;cursor:pointer;transition:background .16s,color .16s}.xmks-tab:hover{background:var(--raised);color:var(--text)}.xmks-tab[data-active=true]{background:#172b38;color:#8ed0fa}.xmks-railnote{margin-top:auto;padding:10px 9px;color:#687684;font-size:11px;line-height:1.45}.xmks-main{display:grid;grid-template-rows:64px minmax(0,1fr) auto 64px;min-width:0;min-height:0}.xmks-head{display:flex;align-items:center;justify-content:space-between;padding:0 20px;border-bottom:1px solid var(--line)}.xmks-heading{font-size:20px;font-weight:800}.xmks-subtitle{margin-top:2px;color:var(--muted);font-size:12px}.xmks-iconbtn{display:grid;place-items:center;width:36px;height:36px;padding:0;border:0;border-radius:50%;background:transparent;cursor:pointer}.xmks-iconbtn:hover{background:var(--raised)}.xmks-view{display:none;min-height:0;padding:20px;overflow:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:transparent transparent}.xmks-view[data-active=true]{display:block}.xmks-view:hover{scrollbar-color:var(--line-strong) transparent}.xmks-view::-webkit-scrollbar,.xmks-log::-webkit-scrollbar{width:6px;height:6px}.xmks-view::-webkit-scrollbar-thumb,.xmks-log::-webkit-scrollbar-thumb{border-radius:99px;background:transparent}.xmks-view:hover::-webkit-scrollbar-thumb,.xmks-log:hover::-webkit-scrollbar-thumb{background:var(--line-strong)}.xmks-label,.xmks-legend{display:block;margin-bottom:8px;color:var(--text);font-size:13px;font-weight:750}.xmks-textarea,.xmks-search input{box-sizing:border-box;width:100%;border:1px solid var(--line-strong);border-radius:8px;outline:0;background:var(--panel);color:var(--text)}.xmks-textarea{height:180px;padding:13px;resize:none;font:14px/1.6 ui-monospace,"Cascadia Code",monospace}.xmks-textarea:focus,.xmks-search input:focus{border-color:var(--blue);box-shadow:0 0 0 2px rgb(29 155 240/.2)}.xmks-hint,.xmks-preset-tools,.xmks-toolbar,.xmks-category-head,.xmks-foot,.xmks-task-head{display:flex;align-items:center;justify-content:space-between;gap:12px}.xmks-hint,.xmks-preset-tools{margin-top:8px;color:var(--muted);font-size:12px}.xmks-options{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:18px}.xmks-fieldset{min-width:0;margin:0;padding:0;border:0}.xmks-option-stack{display:grid;gap:8px}.xmks-option,.xmks-radio{position:relative;display:flex;align-items:center;gap:9px;min-height:30px;cursor:pointer}.xmks-option input,.xmks-radio input,.xmks-segments input{position:absolute;width:1px;height:1px;opacity:0}.xmks-switch{position:relative;width:36px;height:20px;margin-left:auto;border:1px solid var(--line-strong);border-radius:99px;background:var(--raised);transition:.16s}.xmks-switch::after{content:"";position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:var(--muted);transition:.16s}.xmks-option input:checked+.xmks-switch{border-color:var(--blue);background:var(--blue)}.xmks-option input:checked+.xmks-switch::after{background:#fff;transform:translateX(16px)}.xmks-radio-mark{width:17px;height:17px;border:1px solid var(--line-strong);border-radius:50%}.xmks-radio input:checked+.xmks-radio-mark{border:5px solid var(--blue)}.xmks-segments{display:grid;grid-template-columns:repeat(4,1fr);gap:3px;padding:3px;border:1px solid var(--line);border-radius:8px;background:var(--bg)}.xmks-segments span{display:grid;place-items:center;min-height:34px;border-radius:6px;color:var(--muted);font-size:12px;font-weight:700;cursor:pointer}.xmks-segments input:checked+span{background:var(--raised);color:var(--text);box-shadow:0 1px 4px rgb(0 0 0/.36)}.xmks-category{padding:0 0 18px;margin-bottom:18px;border-bottom:1px solid var(--line)}.xmks-category-title{font-weight:800}.xmks-category-desc{margin-top:3px;color:var(--muted);font-size:11px}.xmks-category-count{color:var(--muted);font-size:12px}.xmks-chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}.xmks-chip,.xmks-badge{display:inline-flex;align-items:center;gap:5px;border-radius:99px}.xmks-chip{min-height:32px;padding:5px 11px;border:1px solid #3d444b;background:#181b1f;color:#cfd9de;cursor:pointer;overflow-wrap:anywhere;transition:.16s}.xmks-chip:hover{border-color:#657786;background:var(--raised)}.xmks-chip[data-selected=true]{border-color:var(--blue);background:var(--blue-soft);color:#9bd8ff}.xmks-sync{display:flex;align-items:center;gap:8px;min-height:44px;padding:0 12px;border:1px solid var(--line);border-radius:8px;background:var(--panel)}.xmks-dot{width:7px;height:7px;flex:0 0 auto;border-radius:50%;background:var(--green);box-shadow:0 0 0 3px rgb(0 186 124/.12)}.xmks-sync small{color:var(--muted)}.xmks-toolbar{margin-bottom:14px}.xmks-search{position:relative;flex:1}.xmks-search svg{position:absolute;left:11px;top:11px;color:var(--muted)}.xmks-search input{height:40px;padding:0 12px 0 38px}.xmks-list{min-height:0;border-top:1px solid var(--line)}.xmks-row{display:grid;grid-template-columns:30px minmax(0,1fr) 38px;align-items:center;min-height:70px;border-bottom:1px solid var(--line)}.xmks-check{width:17px;height:17px;accent-color:var(--blue)}.xmks-word{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:750}.xmks-wordblock{min-width:0;padding:8px 8px 8px 0}.xmks-meta{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}.xmks-badge{min-height:22px;padding:2px 8px;border:1px solid #3b4248;background:#15191d;color:#9aa8b2;font-size:11px}.xmks-badge-blue{border-color:#164e70;background:#0d2635;color:#83c9f4}.xmks-badge-time{border-color:#4a4230;background:#211d13;color:#d7bd79}.xmks-empty{display:grid;place-items:center;min-height:240px;color:var(--muted);text-align:center}.xmks-task{display:none;padding:14px 20px;border-top:1px solid var(--line);background:var(--panel)}.xmks-task[data-show=true]{display:block}.xmks-task-title{font-weight:750}.xmks-task-meta{color:var(--muted);font-size:12px}.xmks-progress{height:5px;margin:10px 0;border-radius:99px;overflow:hidden;background:var(--line)}.xmks-bar{height:100%;width:0;border-radius:99px;background:var(--blue);transition:width .2s}.xmks-log{max-height:82px;overflow:auto;color:var(--muted);font:12px/1.5 ui-monospace,"Cascadia Code",monospace;white-space:pre-wrap}.xmks-foot{min-width:0;padding:0 20px;border-top:1px solid var(--line)}.xmks-status{min-width:0;overflow:hidden;color:var(--muted);font-size:12px;text-overflow:ellipsis;white-space:nowrap}.xmks-actions{display:flex;gap:8px}.xmks-btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:38px;padding:0 15px;border:1px solid var(--line-strong);border-radius:99px;background:transparent;font-weight:750;cursor:pointer;transition:.16s}.xmks-btn:hover{background:var(--raised)}.xmks-primary{border-color:var(--text);background:var(--text);color:#0f1419}.xmks-danger{border-color:#7b1c24;color:#ff8b91}.xmks-btn:disabled{opacity:.45;cursor:not-allowed}.xmks-toast{position:absolute;right:20px;bottom:78px;max-width:380px;padding:12px 14px;border:1px solid var(--line);border-left:3px solid var(--blue);border-radius:8px;background:var(--panel);box-shadow:0 12px 32px rgb(0 0 0/.38);opacity:0;transform:translateY(8px);pointer-events:none;transition:.18s}.xmks-toast[data-show=true]{opacity:1;transform:none}.xmks-toast[data-tone=error]{border-left-color:var(--red)}.xmks-toast[data-tone=success]{border-left-color:var(--green)}.xmks-dialog-wrap{position:fixed;inset:0;z-index:2147483602;display:grid;place-items:center;padding:18px;visibility:hidden;opacity:0;background:rgb(0 0 0/.56);transition:.18s}.xmks-dialog-wrap[data-show=true]{visibility:visible;opacity:1}.xmks-dialog-card{width:min(560px,calc(100vw - 36px));max-height:min(680px,calc(100vh - 36px));overflow:auto;padding:20px;border:1px solid var(--line);border-radius:12px;background:var(--bg);box-shadow:0 18px 60px rgb(0 0 0/.56)}.xmks-dialog-card h2{margin:0;font-size:18px}.xmks-dialog-card p{margin:6px 0;color:var(--muted);font-size:12px}.xmks-confirm-words{display:flex;flex-wrap:wrap;gap:6px;max-height:100px;margin:14px 0;overflow:auto}.xmks-confirm-words span{padding:5px 8px;border:1px solid var(--line);border-radius:99px;background:var(--panel);font-size:12px}.xmks-confirm-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:14px 0}.xmks-stat{padding:10px;border:1px solid var(--line);border-radius:8px;background:var(--panel);text-align:center}.xmks-stat strong{display:block;color:var(--blue);font-size:20px}.xmks-stat small{color:var(--muted)}.xmks-dialog-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}.xmks-error-list{max-height:120px;overflow:auto;color:#ff8b91;font-size:12px;white-space:pre-wrap}.xmks-focus:focus-visible,.xmks-btn:focus-visible,.xmks-iconbtn:focus-visible,.xmks-chip:focus-visible,.xmks-tab:focus-visible,.xmks-option:has(input:focus-visible),.xmks-radio:has(input:focus-visible),.xmks-segments label:has(input:focus-visible){outline:2px solid var(--blue);outline-offset:2px}@media(max-width:720px){.xmks-overlay{place-items:end center;padding:0}.xmks-window{grid-template-columns:1fr;width:100%;height:min(94dvh,800px);border-bottom:0;border-left:0;border-right:0;border-radius:12px 12px 0 0}.xmks-rail{display:block;padding:8px 12px;border-right:0;border-bottom:1px solid var(--line)}.xmks-brand,.xmks-railnote{display:none}.xmks-rail nav{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}.xmks-tab{justify-content:center;padding:0 6px;font-size:12px}.xmks-options{grid-template-columns:1fr}.xmks-segments{grid-template-columns:repeat(2,1fr)}.xmks-foot{padding-bottom:env(safe-area-inset-bottom)}.xmks-status{display:none}.xmks-actions{width:100%}.xmks-actions .xmks-btn{flex:1}.xmks-confirm-stats{grid-template-columns:1fr 1fr}.xmks-confirm-stats .xmks-stat:last-child{grid-column:1/-1}}@media(prefers-reduced-motion:reduce){*,*::before,*::after{transition-duration:.01ms!important;animation-duration:.01ms!important}}
+        :host{
+          --bg:#f8fbff;
+          --panel:#ffffff;
+          --raised:#edf5ff;
+          --line:#b9c8d8;
+          --line-strong:#17212b;
+          --text:#101820;
+          --muted:#5c6b79;
+          --blue:#147ce5;
+          --blue-soft:#dceeff;
+          --red:#d9382d;
+          --green:#138a5b;
+          --mint:#c9f5df;
+          --lavender:#eadcff;
+          --sun:#ffe36e;
+          --ember:#ff6b3d;
+          color:var(--text);
+          font:14px/1.45 Inter,"Segoe UI","Microsoft YaHei",sans-serif;
+          display:contents;
+          letter-spacing:0;
+        }
+        *,*::before,*::after{box-sizing:border-box;letter-spacing:0}
+        button,input,textarea,select{font:inherit}
+        button{color:inherit}
+        #xmks-launch{position:fixed;display:grid;place-items:center;padding:0;border-radius:50%;cursor:pointer;z-index:2147483600;transition:background .16s,color .16s,transform .16s,box-shadow .16s}
+        #xmks-launch[hidden]{display:none}
+        #xmks-launch:active{transform:scale(.94)}
+        .xmks-overlay{position:fixed;inset:0;z-index:2147483601;display:grid;place-items:center;visibility:hidden;opacity:0;transition:opacity .22s,visibility .22s}
+        .xmks-overlay[data-open=true]{visibility:visible;opacity:1}
+        .xmks-window{display:grid;overflow:hidden;transform:translateY(8px) scale(.985);transition:transform .22s cubic-bezier(.2,.8,.2,1)}
+        .xmks-overlay[data-open=true] .xmks-window{transform:none}
+        .xmks-rail{display:flex;flex-direction:column;min-width:0}
+        .xmks-brand{display:flex;align-items:center;font-weight:800}
+        .xmks-brandmark{display:grid;place-items:center}
+        .xmks-tab{display:flex;align-items:center;gap:9px;width:100%;height:42px;background:transparent;text-align:left;cursor:pointer;transition:background .16s,color .16s,border-color .16s,box-shadow .16s}
+        .xmks-railnote{font-size:11px;line-height:1.45}
+        .xmks-main{display:grid;min-width:0;min-height:0}
+        .xmks-head{display:flex;align-items:center;justify-content:space-between}
+        .xmks-heading{font-weight:800}
+        .xmks-subtitle{margin-top:2px;font-size:12px}
+        .xmks-iconbtn{display:grid;place-items:center;width:36px;height:36px;padding:0;background:transparent;cursor:pointer}
+        .xmks-view{display:none;min-height:0;overflow:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:transparent transparent}
+        .xmks-view[data-active=true]{display:block}
+        .xmks-view::-webkit-scrollbar,.xmks-log::-webkit-scrollbar{width:6px;height:6px}
+        .xmks-view::-webkit-scrollbar-thumb,.xmks-log::-webkit-scrollbar-thumb{border-radius:99px;background:transparent}
+        .xmks-label,.xmks-legend{display:block;margin-bottom:8px;font-size:13px}
+        .xmks-textarea,.xmks-search input{box-sizing:border-box;width:100%;outline:0}
+        .xmks-textarea{resize:none;font:14px/1.6 ui-monospace,"Cascadia Code",monospace}
+        .xmks-hint,.xmks-preset-tools,.xmks-toolbar,.xmks-category-head,.xmks-foot,.xmks-task-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+        .xmks-hint{margin-top:8px;font-size:12px}
+        .xmks-options{display:grid;grid-template-columns:1fr 1fr}
+        .xmks-fieldset{min-width:0;margin:0}
+        .xmks-option-stack{display:grid;gap:8px}
+        .xmks-option,.xmks-radio{position:relative;display:flex;align-items:center;gap:9px;cursor:pointer}
+        .xmks-option input,.xmks-radio input,.xmks-segments input{position:absolute;width:1px;height:1px;opacity:0}
+        .xmks-switch{position:relative;width:36px;height:20px;margin-left:auto;border-radius:99px;transition:.16s}
+        .xmks-switch::after{content:"";position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:var(--muted);transition:.16s}
+        .xmks-option input:checked+.xmks-switch::after{background:#fff;transform:translateX(16px)}
+        .xmks-radio-mark{width:17px;height:17px;border-radius:50%}
+        .xmks-radio input:checked+.xmks-radio-mark{border-width:5px;border-style:solid}
+        .xmks-segments{display:grid;grid-template-columns:repeat(4,1fr);gap:3px;padding:3px}
+        .xmks-segments span{display:grid;place-items:center;min-height:34px;font-size:12px;font-weight:700;cursor:pointer}
+        .xmks-chips{display:flex;flex-wrap:wrap}
+        .xmks-chip,.xmks-badge{display:inline-flex;align-items:center;gap:5px;border-radius:99px}
+        .xmks-chip{padding:5px 11px;cursor:pointer;overflow-wrap:anywhere;transition:background .16s,border-color .16s,color .16s,transform .16s,box-shadow .16s}
+        .xmks-sync{display:flex;align-items:center;gap:8px;padding:0 12px}
+        .xmks-dot{width:7px;height:7px;flex:0 0 auto;border-radius:50%;background:var(--green);box-shadow:0 0 0 3px rgb(19 138 91/.13)}
+        .xmks-sync small{font-size:11px}
+        .xmks-search{position:relative;flex:1}
+        .xmks-search svg{position:absolute;left:11px;top:11px;color:var(--muted)}
+        .xmks-search input{height:40px;padding:0 12px 0 38px}
+        .xmks-list{min-height:0}
+        .xmks-row{display:grid;grid-template-columns:30px minmax(0,1fr) 38px;align-items:center;min-height:70px;border-bottom:1px solid var(--line)}
+        .xmks-check{width:17px;height:17px}
+        .xmks-word{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:750}
+        .xmks-wordblock{min-width:0;padding:8px 8px 8px 0}
+        .xmks-meta{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
+        .xmks-badge{min-height:22px;padding:2px 8px;font-size:11px}
+        .xmks-empty{display:grid;place-items:center;min-height:240px;text-align:center}
+        .xmks-task{display:none}
+        .xmks-task[data-show=true]{display:block}
+        .xmks-task-title{font-weight:750}
+        .xmks-task-meta{color:var(--muted);font-size:12px}
+        .xmks-progress{height:5px;margin:10px 0;border-radius:99px;overflow:hidden}
+        .xmks-bar{height:100%;width:0;border-radius:99px;transition:width .2s}
+        .xmks-log{max-height:82px;overflow:auto;font:12px/1.5 ui-monospace,"Cascadia Code",monospace;white-space:pre-wrap}
+        .xmks-foot{min-width:0}
+        .xmks-status{min-width:0;overflow:hidden;font-size:12px;text-overflow:ellipsis;white-space:nowrap}
+        .xmks-actions{display:flex}
+        .xmks-btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:0 15px;border-radius:99px;font-weight:750;cursor:pointer;transition:background .16s,color .16s,box-shadow .16s,transform .16s}
+        .xmks-btn:disabled{opacity:.45;cursor:not-allowed}
+        .xmks-toast{position:absolute;max-width:380px;padding:12px 14px;opacity:0;transform:translateY(8px);pointer-events:none;transition:opacity .18s,transform .18s}
+        .xmks-toast[data-show=true]{opacity:1;transform:none}
+        .xmks-toast[data-tone=error]{border-left-color:var(--red)}
+        .xmks-toast[data-tone=success]{border-left-color:var(--green)}
+        .xmks-dialog-wrap{position:fixed;inset:0;z-index:2147483602;display:grid;place-items:center;padding:18px;visibility:hidden;opacity:0;transition:opacity .18s,visibility .18s}
+        .xmks-dialog-wrap[data-show=true]{visibility:visible;opacity:1}
+        .xmks-dialog-card{width:min(560px,calc(100vw - 36px));max-height:min(680px,calc(100vh - 36px));overflow:auto;padding:20px}
+        .xmks-dialog-card h2{margin:0;font-size:18px}
+        .xmks-dialog-card p{margin:6px 0;color:var(--muted);font-size:12px}
+        .xmks-confirm-words{display:flex;flex-wrap:wrap;gap:6px;max-height:100px;margin:14px 0;overflow:auto}
+        .xmks-confirm-words span{padding:5px 8px;border-radius:99px;font-size:12px}
+        .xmks-confirm-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:14px 0}
+        .xmks-stat{padding:10px;text-align:center}
+        .xmks-stat strong{display:block;font-size:20px}
+        .xmks-stat small{color:var(--muted)}
+        .xmks-dialog-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
+        .xmks-error-list{max-height:120px;overflow:auto;font-size:12px;white-space:pre-wrap}
+        #xmks-launch{
+          width:42px;
+          height:42px;
+          border:1px solid rgb(255 255 255/.18);
+          background:#101820;
+          color:#fff;
+          box-shadow:0 5px 14px rgb(16 24 32/.22);
+        }
+        #xmks-launch:hover{background:var(--blue);color:#fff;box-shadow:0 7px 18px rgb(20 124 229/.3)}
+        .xmks-overlay{padding:24px;background:rgb(16 24 32/.38);backdrop-filter:blur(8px)}
+        .xmks-window{
+          grid-template-columns:188px minmax(0,1fr);
+          width:min(980px,calc(100vw - 48px));
+          height:min(720px,calc(100vh - 48px));
+          border:1px solid #17212b;
+          border-radius:20px;
+          background:var(--bg);
+          box-shadow:0 24px 64px rgb(25 45 64/.28),0 4px 0 rgb(16 24 32/.08);
+        }
+        .xmks-rail{
+          padding:18px 12px 16px;
+          border-right:1px solid #17212b;
+          background:#dceeff;
+        }
+        .xmks-brand{gap:10px;padding:2px 8px 20px;color:#101820;font-size:15px}
+        .xmks-brandmark{
+          width:30px;
+          height:30px;
+          border:1px solid #101820;
+          border-radius:9px;
+          background:var(--sun);
+          color:#101820;
+          box-shadow:2px 2px 0 #101820;
+        }
+        .xmks-tab{
+          min-height:44px;
+          margin:3px 0;
+          padding:0 12px;
+          border:1px solid transparent;
+          border-radius:12px;
+          color:#425466;
+          font-weight:750;
+        }
+        .xmks-tab:hover{border-color:#7aaee0;background:rgb(255 255 255/.62);color:#101820}
+        .xmks-tab[data-active=true]{border-color:#101820;background:#fff;color:#101820;box-shadow:3px 3px 0 #101820}
+        .xmks-github{
+          display:flex;
+          align-items:center;
+          gap:9px;
+          min-height:40px;
+          margin-top:auto;
+          padding:0 10px;
+          border:1px solid #101820;
+          border-radius:999px;
+          background:#fff;
+          color:#101820;
+          font-size:12px;
+          font-weight:750;
+          text-decoration:none;
+          transition:transform .16s,box-shadow .16s,background .16s;
+        }
+        .xmks-github:hover{background:var(--lavender);box-shadow:3px 3px 0 #101820;transform:translate(-1px,-1px)}
+        .xmks-railnote{margin-top:12px;padding:10px 8px 0;color:#52697d}
+        .xmks-main{grid-template-rows:70px minmax(0,1fr) auto minmax(76px,auto);background:var(--bg)}
+        .xmks-head{padding:0 24px;border-bottom:1px solid var(--line);background:#fff}
+        .xmks-heading{font-size:21px;line-height:1.15}
+        .xmks-subtitle{color:var(--muted)}
+        .xmks-iconbtn{border:1px solid transparent;color:#344454;transition:background .16s,border-color .16s,transform .16s}
+        .xmks-iconbtn:hover{border-color:var(--line);background:var(--raised);transform:translateY(-1px)}
+        .xmks-view{padding:22px 24px 28px;scrollbar-color:transparent transparent}
+        .xmks-view:hover{scrollbar-color:#8da6bd transparent}
+        .xmks-view:hover::-webkit-scrollbar-thumb,.xmks-log:hover::-webkit-scrollbar-thumb{background:#8da6bd}
+        .xmks-label,.xmks-legend{color:#17212b;font-weight:800}
+        .xmks-textarea,.xmks-search input{border-color:#91a7bb;border-radius:10px;background:#fff;color:#101820;box-shadow:inset 0 1px 0 rgb(16 24 32/.03)}
+        .xmks-textarea{height:184px;padding:14px 15px}
+        .xmks-textarea:focus,.xmks-search input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgb(20 124 229/.14)}
+        .xmks-hint,.xmks-preset-tools{color:var(--muted)}
+        .xmks-options{gap:20px;margin-top:22px}
+        .xmks-fieldset{padding:14px;border:1px solid var(--line);border-radius:12px;background:#fff}
+        .xmks-dialog-card .xmks-fieldset{padding:12px}
+        .xmks-option,.xmks-radio{min-height:32px;color:#283747}
+        .xmks-switch{border-color:#8ea2b5;background:#dfe8ef}
+        .xmks-option input:checked+.xmks-switch{border-color:#101820;background:var(--blue)}
+        .xmks-radio-mark{border-color:#7b90a4;background:#fff}
+        .xmks-radio input:checked+.xmks-radio-mark{border-color:var(--blue)}
+        .xmks-segments{border-color:#91a7bb;border-radius:10px;background:#eaf2f9}
+        .xmks-segments span{border-radius:7px;color:#526575}
+        .xmks-segments input:checked+span{background:#fff;color:#101820;box-shadow:0 1px 4px rgb(37 61 82/.16)}
+        .xmks-preset-tools{align-items:stretch;margin:0 0 18px}
+        .xmks-sync{min-height:48px;border-color:#17212b;border-radius:12px;background:var(--mint);color:#132b21;box-shadow:2px 2px 0 #17212b}
+        .xmks-sync small{color:#416555}
+        .xmks-category{
+          margin:0 0 12px;
+          padding:0;
+          overflow:hidden;
+          border:1px solid var(--line);
+          border-radius:14px;
+          background:#fff;
+        }
+        .xmks-category-head{
+          width:100%;
+          min-height:50px;
+          padding:0 14px;
+          border:0;
+          background:#edf5ff;
+          color:#101820;
+          text-align:left;
+          cursor:pointer;
+          transition:background .16s;
+        }
+        .xmks-category:nth-child(3n+2) .xmks-category-head{background:#f1e8ff}
+        .xmks-category:nth-child(3n) .xmks-category-head{background:#e0f6eb}
+        .xmks-category-head:hover{background:#dceeff}
+        .xmks-category-title{font-size:14px;font-weight:850}
+        .xmks-category-tail{display:flex;align-items:center;gap:8px}
+        .xmks-category-count{color:#526575;font-weight:700}
+        .xmks-category-chevron{display:grid;place-items:center;transition:transform .18s}
+        .xmks-category-head[aria-expanded=true] .xmks-category-chevron{transform:rotate(90deg)}
+        .xmks-chips{gap:8px;margin:0;padding:14px}
+        .xmks-category[data-collapsed=true] .xmks-chips{display:none}
+        .xmks-chip{min-height:32px;border-color:#8ca0b3;background:#273746;color:#fff;box-shadow:none}
+        .xmks-chip:hover{border-color:#101820;background:#3b5063;transform:translateY(-1px)}
+        .xmks-chip[data-selected=true]{border-color:#101820;background:var(--sun);color:#101820;box-shadow:2px 2px 0 #101820}
+        .xmks-toolbar{margin-bottom:16px}
+        .xmks-list{overflow:hidden;border:1px solid var(--line);border-radius:12px;background:#fff}
+        .xmks-row{padding:0 10px;border-bottom-color:#d8e2eb}
+        .xmks-row:last-child{border-bottom:0}
+        .xmks-check{accent-color:var(--blue)}
+        .xmks-badge{border-color:#a8bac9;background:#edf3f7;color:#425466}
+        .xmks-badge-blue{border-color:#79afe0;background:#dceeff;color:#185b98}
+        .xmks-badge-time{border-color:#d2b84f;background:#fff4b8;color:#715d08}
+        .xmks-empty{color:#5c6b79}
+        .xmks-task{margin:0 24px;padding:14px 16px;border:1px solid #17212b;border-radius:12px;background:#e9dcff;box-shadow:2px 2px 0 #17212b}
+        .xmks-progress{background:#c8b4e5}
+        .xmks-bar{background:var(--blue)}
+        .xmks-log{color:#4f4562}
+        .xmks-foot{
+          align-items:center;
+          min-height:76px;
+          padding:14px 24px calc(14px + env(safe-area-inset-bottom));
+          border-top:1px solid var(--line);
+          background:#fff;
+        }
+        .xmks-status{color:#5c6b79}
+        .xmks-actions{flex-wrap:wrap;justify-content:flex-end;gap:9px}
+        .xmks-btn{min-height:40px;border-color:#17212b;background:#fff;color:#101820;box-shadow:2px 2px 0 transparent}
+        .xmks-btn:hover{background:var(--raised);box-shadow:2px 2px 0 #17212b;transform:translate(-1px,-1px)}
+        .xmks-primary{border-color:#101820;background:#101820;color:#fff;box-shadow:2px 2px 0 var(--blue)}
+        .xmks-primary:hover{background:var(--blue);color:#fff}
+        .xmks-danger{border-color:#c94c44;background:#fff4f2;color:#a51f18}
+        .xmks-btn:disabled{box-shadow:none;transform:none}
+        .xmks-toast{right:24px;bottom:92px;border-color:#17212b;border-left:5px solid var(--blue);border-radius:10px;background:#fff;box-shadow:5px 5px 0 #17212b}
+        .xmks-dialog-wrap{background:rgb(16 24 32/.38);backdrop-filter:blur(7px)}
+        .xmks-dialog-card{border-color:#17212b;border-radius:16px;background:#f8fbff;box-shadow:8px 8px 0 rgb(16 24 32/.24)}
+        .xmks-confirm-words span{border-color:#8ca0b3;background:#273746;color:#fff}
+        .xmks-stat{border-color:#a8bac9;border-radius:10px;background:#fff}
+        .xmks-stat:nth-child(1){background:#dceeff}
+        .xmks-stat:nth-child(2){background:#f1e8ff}
+        .xmks-stat:nth-child(3){background:#e0f6eb}
+        .xmks-stat strong{color:#101820}
+        .xmks-error-list{color:#a51f18}
+        .xmks-focus:focus-visible,.xmks-btn:focus-visible,.xmks-iconbtn:focus-visible,.xmks-chip:focus-visible,.xmks-tab:focus-visible,.xmks-category-head:focus-visible,.xmks-github:focus-visible,.xmks-option:has(input:focus-visible),.xmks-radio:has(input:focus-visible),.xmks-segments label:has(input:focus-visible){outline:3px solid rgb(20 124 229/.45);outline-offset:2px}
+        @media(max-width:720px){
+          .xmks-overlay{place-items:end center;padding:0}
+          .xmks-window{grid-template-columns:1fr;width:100%;height:min(95dvh,820px);border-right:0;border-bottom:0;border-left:0;border-radius:18px 18px 0 0}
+          .xmks-rail{display:flex;flex-direction:row;align-items:center;gap:8px;padding:10px 12px;border-right:0;border-bottom:1px solid #17212b;background:#dceeff}
+          .xmks-brand,.xmks-railnote{display:none}
+          .xmks-rail nav{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));flex:1;gap:6px;min-width:0}
+          .xmks-github{display:grid;place-items:center;flex:0 0 42px;width:42px;min-height:42px;margin:0;padding:0;border-radius:12px}
+          .xmks-github span{display:none}
+          .xmks-tab{justify-content:center;min-height:42px;padding:0 6px;font-size:12px}
+          .xmks-main{grid-template-rows:64px minmax(0,1fr) auto minmax(78px,auto)}
+          .xmks-head,.xmks-view{padding-left:16px;padding-right:16px}
+          .xmks-options{grid-template-columns:1fr}
+          .xmks-segments{grid-template-columns:repeat(2,1fr)}
+          .xmks-preset-tools{flex-direction:column}
+          .xmks-preset-tools .xmks-actions{justify-content:stretch}
+          .xmks-preset-tools .xmks-btn{flex:1}
+          .xmks-task{margin:0 16px}
+          .xmks-foot{padding:12px 16px calc(14px + env(safe-area-inset-bottom))}
+          .xmks-status{display:none}
+          .xmks-actions{width:100%}
+          .xmks-actions .xmks-btn{flex:1;min-width:0}
+          .xmks-confirm-stats{grid-template-columns:1fr 1fr}
+          .xmks-confirm-stats .xmks-stat:last-child{grid-column:1/-1}
+        }
+        @media(prefers-reduced-motion:reduce){*,*::before,*::after{transition-duration:.01ms!important;animation-duration:.01ms!important}}
       </style>
       <button id="xmks-launch" hidden title="屏蔽词工作台" aria-label="打开屏蔽词工作台">${launcherIcon(24)}</button>
-      <div class="xmks-overlay" id="xmks-overlay" data-open="false"><section class="xmks-window" role="dialog" aria-modal="true" aria-labelledby="xmks-title"><aside class="xmks-rail"><div class="xmks-brand"><span class="xmks-brandmark">M</span><span>Mute Studio</span></div><nav aria-label="工作台页面"><button class="xmks-tab" data-view="add" data-active="true">${icon('plus')}<span>批量添加</span></button><button class="xmks-tab" data-view="presets">${icon('list')}<span>远程词库</span></button><button class="xmks-tab" data-view="manage">${icon('library')}<span>用户词库</span></button></nav><div class="xmks-railnote"><span class="xmks-dot"></span> 请求仅发送至 X<br>不会上传登录凭证</div></aside><div class="xmks-main"><header class="xmks-head"><div><div class="xmks-heading" id="xmks-title">批量添加</div><div class="xmks-subtitle">每条请求间隔 0.5 秒</div></div><button class="xmks-iconbtn xmks-close" aria-label="关闭">${icon('close')}</button></header><main class="xmks-view" data-view-panel="add" data-active="true"><label class="xmks-label" for="xmks-input">屏蔽词或短语</label><textarea id="xmks-input" class="xmks-textarea" placeholder="广告\n色情\n推广"></textarea><div class="xmks-hint"><span>支持换行、逗号和分号</span><span class="xmks-count">0 个</span></div><div class="xmks-options"><fieldset class="xmks-fieldset"><legend class="xmks-legend">屏蔽位置</legend><div class="xmks-option-stack"><label class="xmks-option"><span>Home timeline</span><input id="xmks-home" type="checkbox" checked><i class="xmks-switch"></i></label><label class="xmks-option"><span>Notifications</span><input id="xmks-notifications" type="checkbox" checked><i class="xmks-switch"></i></label></div></fieldset><fieldset class="xmks-fieldset"><legend class="xmks-legend">通知来源</legend><div class="xmks-option-stack"><label class="xmks-radio"><input type="radio" name="xmks-source" value="anyone"><i class="xmks-radio-mark"></i>From anyone</label><label class="xmks-radio"><input type="radio" name="xmks-source" value="non_following" checked><i class="xmks-radio-mark"></i>From people you don’t follow</label></div></fieldset><fieldset class="xmks-fieldset"><legend class="xmks-legend">屏蔽时长</legend><div class="xmks-segments"><label><input type="radio" name="xmks-duration" value="" checked><span>Forever</span></label><label><input type="radio" name="xmks-duration" value="86400000"><span>24 hours</span></label><label><input type="radio" name="xmks-duration" value="604800000"><span>7 days</span></label><label><input type="radio" name="xmks-duration" value="2592000000"><span>30 days</span></label></div></fieldset></div></main><main class="xmks-view" data-view-panel="presets" data-active="false"><div class="xmks-preset-tools"><div class="xmks-sync"><span class="xmks-dot"></span><strong class="xmks-source">远程词库未加载</strong><small class="xmks-sync-time">未同步 · 0 个</small></div><div class="xmks-actions"><button class="xmks-btn" id="xmks-sync" title="同步远程词库">${icon('refresh',17)}同步远程词库</button><button class="xmks-btn" id="xmks-clear-presets">清除选择</button></div></div><div class="xmks-presets"></div></main><main class="xmks-view" data-view-panel="manage" data-active="false"><div class="xmks-toolbar"><label class="xmks-search">${icon('search',18)}<input id="xmks-search" placeholder="搜索已屏蔽词" aria-label="搜索已屏蔽词"></label><button id="xmks-refresh" class="xmks-iconbtn" title="刷新账户列表" aria-label="刷新账户列表">${icon('refresh')}</button></div><div class="xmks-list"></div></main><section class="xmks-task" id="xmks-task" aria-live="polite"><div class="xmks-task-head"><span class="xmks-task-title">就绪</span><span class="xmks-task-meta"></span></div><div class="xmks-progress"><div class="xmks-bar"></div></div><div class="xmks-log"></div></section><footer class="xmks-foot"><div class="xmks-status">就绪</div><div class="xmks-actions"><button id="xmks-stop" class="xmks-btn xmks-danger" hidden>${icon('stop',17)}停止剩余任务</button><button id="xmks-delete" class="xmks-btn xmks-danger" hidden>${icon('trash',17)}删除所选</button><button id="xmks-run" class="xmks-btn xmks-primary">${icon('plus',17)}检查并添加</button></div></footer><div class="xmks-toast" role="status" aria-live="polite"></div></div></section></div><div class="xmks-dialog-wrap" id="xmks-confirm" data-show="false"><section class="xmks-dialog-card" role="dialog" aria-modal="true" aria-labelledby="xmks-confirm-title"><h2 id="xmks-confirm-title">检查并添加</h2><p>确认后才会发送请求；每条请求间隔 0.5 秒。</p><div class="xmks-confirm-stats"><div class="xmks-stat"><strong id="xmks-pending">0</strong><small>待处理</small></div><div class="xmks-stat"><strong id="xmks-existing">0</strong><small>已存在</small></div><div class="xmks-stat"><strong id="xmks-new">0</strong><small>将新增</small></div></div><div class="xmks-confirm-words" id="xmks-confirm-words"></div><div class="xmks-options"><fieldset class="xmks-fieldset"><legend class="xmks-legend">屏蔽位置</legend><div class="xmks-option-stack"><label class="xmks-option"><span>Home timeline</span><input id="xmks-c-home" type="checkbox"><i class="xmks-switch"></i></label><label class="xmks-option"><span>Notifications</span><input id="xmks-c-notifications" type="checkbox"><i class="xmks-switch"></i></label></div></fieldset><fieldset class="xmks-fieldset"><legend class="xmks-legend">通知来源</legend><div class="xmks-option-stack"><label class="xmks-radio"><input type="radio" name="xmks-c-source" value="anyone"><i class="xmks-radio-mark"></i>From anyone</label><label class="xmks-radio"><input type="radio" name="xmks-c-source" value="non_following"><i class="xmks-radio-mark"></i>From people you don’t follow</label></div></fieldset><fieldset class="xmks-fieldset"><legend class="xmks-legend">屏蔽时长</legend><div class="xmks-segments"><label><input type="radio" name="xmks-c-duration" value=""><span>Forever</span></label><label><input type="radio" name="xmks-c-duration" value="86400000"><span>24 hours</span></label><label><input type="radio" name="xmks-c-duration" value="604800000"><span>7 days</span></label><label><input type="radio" name="xmks-c-duration" value="2592000000"><span>30 days</span></label></div></fieldset></div><div class="xmks-dialog-actions"><button class="xmks-btn" id="xmks-confirm-cancel">返回</button><button class="xmks-btn xmks-primary" id="xmks-confirm-run">添加</button></div></section></div><div class="xmks-dialog-wrap" id="xmks-delete-modal" data-show="false"><section class="xmks-dialog-card" role="dialog" aria-modal="true" aria-labelledby="xmks-delete-title"><h2 id="xmks-delete-title">删除屏蔽词</h2><p id="xmks-delete-copy">此操作不可撤销。</p><div class="xmks-confirm-words" id="xmks-delete-words"></div><div class="xmks-dialog-actions"><button class="xmks-btn" id="xmks-delete-cancel">取消</button><button class="xmks-btn xmks-danger" id="xmks-delete-confirm">确认删除</button></div></section></div></div>`;
+      <div class="xmks-overlay" id="xmks-overlay" data-open="false"><section class="xmks-window" role="dialog" aria-modal="true" aria-labelledby="xmks-title"><aside class="xmks-rail"><div class="xmks-brand"><span class="xmks-brandmark">M</span><span>Mute Studio</span></div><nav aria-label="工作台页面"><button class="xmks-tab" data-view="add" data-active="true">${icon('plus')}<span>批量添加</span></button><button class="xmks-tab" data-view="manage">${icon('library')}<span>用户词库</span></button><button class="xmks-tab" data-view="presets">${icon('list')}<span>远程词库</span></button></nav><div class="xmks-railnote"><span class="xmks-dot"></span> 请求仅发送至 X<br>不会上传登录凭证</div></aside><div class="xmks-main"><header class="xmks-head"><div><div class="xmks-heading" id="xmks-title">批量添加</div><div class="xmks-subtitle">每条请求间隔 0.5 秒</div></div><button class="xmks-iconbtn xmks-close" aria-label="关闭">${icon('close')}</button></header><main class="xmks-view" data-view-panel="add" data-active="true"><label class="xmks-label" for="xmks-input">屏蔽词或短语</label><textarea id="xmks-input" class="xmks-textarea" placeholder="广告\n色情\n推广"></textarea><div class="xmks-hint"><span>支持换行、逗号和分号</span><span class="xmks-count">0 个</span></div><div class="xmks-options"><fieldset class="xmks-fieldset"><legend class="xmks-legend">屏蔽位置</legend><div class="xmks-option-stack"><label class="xmks-option"><span>Home timeline</span><input id="xmks-home" type="checkbox" checked><i class="xmks-switch"></i></label><label class="xmks-option"><span>Notifications</span><input id="xmks-notifications" type="checkbox" checked><i class="xmks-switch"></i></label></div></fieldset><fieldset class="xmks-fieldset"><legend class="xmks-legend">通知来源</legend><div class="xmks-option-stack"><label class="xmks-radio"><input type="radio" name="xmks-source" value="anyone"><i class="xmks-radio-mark"></i>From anyone</label><label class="xmks-radio"><input type="radio" name="xmks-source" value="non_following" checked><i class="xmks-radio-mark"></i>From people you don’t follow</label></div></fieldset><fieldset class="xmks-fieldset"><legend class="xmks-legend">屏蔽时长</legend><div class="xmks-segments"><label><input type="radio" name="xmks-duration" value="" checked><span>Forever</span></label><label><input type="radio" name="xmks-duration" value="86400000"><span>24 hours</span></label><label><input type="radio" name="xmks-duration" value="604800000"><span>7 days</span></label><label><input type="radio" name="xmks-duration" value="2592000000"><span>30 days</span></label></div></fieldset></div></main><main class="xmks-view" data-view-panel="presets" data-active="false"><div class="xmks-preset-tools"><div class="xmks-sync"><span class="xmks-dot"></span><strong class="xmks-source">远程词库未加载</strong><small class="xmks-sync-time">未同步 · 0 个</small></div><div class="xmks-actions"><button class="xmks-btn" id="xmks-sync" title="同步远程词库">${icon('refresh',17)}同步远程词库</button><button class="xmks-btn" id="xmks-clear-presets">清除选择</button></div></div><div class="xmks-presets"></div></main><main class="xmks-view" data-view-panel="manage" data-active="false"><div class="xmks-toolbar"><label class="xmks-search">${icon('search',18)}<input id="xmks-search" placeholder="搜索已屏蔽词" aria-label="搜索已屏蔽词"></label><button id="xmks-refresh" class="xmks-iconbtn" title="刷新账户列表" aria-label="刷新账户列表">${icon('refresh')}</button></div><div class="xmks-list"></div></main><section class="xmks-task" id="xmks-task" aria-live="polite"><div class="xmks-task-head"><span class="xmks-task-title">就绪</span><span class="xmks-task-meta"></span></div><div class="xmks-progress"><div class="xmks-bar"></div></div><div class="xmks-log"></div></section><footer class="xmks-foot"><div class="xmks-status">就绪</div><div class="xmks-actions"><button id="xmks-stop" class="xmks-btn xmks-danger" hidden>${icon('stop',17)}停止剩余任务</button><button id="xmks-delete" class="xmks-btn xmks-danger" hidden>${icon('trash',17)}删除所选</button><button id="xmks-run" class="xmks-btn xmks-primary">${icon('plus',17)}检查并添加</button></div></footer><div class="xmks-toast" role="status" aria-live="polite"></div></div></section></div><div class="xmks-dialog-wrap" id="xmks-confirm" data-show="false"><section class="xmks-dialog-card" role="dialog" aria-modal="true" aria-labelledby="xmks-confirm-title"><h2 id="xmks-confirm-title">检查并添加</h2><p>确认后才会发送请求；每条请求间隔 0.5 秒。</p><div class="xmks-confirm-stats"><div class="xmks-stat"><strong id="xmks-pending">0</strong><small>待处理</small></div><div class="xmks-stat"><strong id="xmks-existing">0</strong><small>已存在</small></div><div class="xmks-stat"><strong id="xmks-new">0</strong><small>将新增</small></div></div><div class="xmks-confirm-words" id="xmks-confirm-words"></div><div class="xmks-options"><fieldset class="xmks-fieldset"><legend class="xmks-legend">屏蔽位置</legend><div class="xmks-option-stack"><label class="xmks-option"><span>Home timeline</span><input id="xmks-c-home" type="checkbox"><i class="xmks-switch"></i></label><label class="xmks-option"><span>Notifications</span><input id="xmks-c-notifications" type="checkbox"><i class="xmks-switch"></i></label></div></fieldset><fieldset class="xmks-fieldset"><legend class="xmks-legend">通知来源</legend><div class="xmks-option-stack"><label class="xmks-radio"><input type="radio" name="xmks-c-source" value="anyone"><i class="xmks-radio-mark"></i>From anyone</label><label class="xmks-radio"><input type="radio" name="xmks-c-source" value="non_following"><i class="xmks-radio-mark"></i>From people you don’t follow</label></div></fieldset><fieldset class="xmks-fieldset"><legend class="xmks-legend">屏蔽时长</legend><div class="xmks-segments"><label><input type="radio" name="xmks-c-duration" value=""><span>Forever</span></label><label><input type="radio" name="xmks-c-duration" value="86400000"><span>24 hours</span></label><label><input type="radio" name="xmks-c-duration" value="604800000"><span>7 days</span></label><label><input type="radio" name="xmks-c-duration" value="2592000000"><span>30 days</span></label></div></fieldset></div><div class="xmks-dialog-actions"><button class="xmks-btn" id="xmks-confirm-cancel">返回</button><button class="xmks-btn xmks-primary" id="xmks-confirm-run">添加</button></div></section></div><div class="xmks-dialog-wrap" id="xmks-delete-modal" data-show="false"><section class="xmks-dialog-card" role="dialog" aria-modal="true" aria-labelledby="xmks-delete-title"><h2 id="xmks-delete-title">删除屏蔽词</h2><p id="xmks-delete-copy">此操作不可撤销。</p><div class="xmks-confirm-words" id="xmks-delete-words"></div><div class="xmks-dialog-actions"><button class="xmks-btn" id="xmks-delete-cancel">取消</button><button class="xmks-btn xmks-danger" id="xmks-delete-confirm">确认删除</button></div></section></div></div>`;
     (document.body || document.documentElement).appendChild(host);
 
     const $ = (selector) => shadow.querySelector(selector);
@@ -227,6 +524,15 @@ const state = {
     const search = $('#xmks-search');
     const list = $('.xmks-list');
     const presets = $('.xmks-presets');
+    const githubLink = document.createElement('a');
+    githubLink.className = 'xmks-github';
+    githubLink.href = 'https://github.com/Stephen-Xu-X/X_keywords_Blocker';
+    githubLink.target = '_blank';
+    githubLink.rel = 'noopener noreferrer';
+    githubLink.title = '打开 GitHub 仓库';
+    githubLink.setAttribute('aria-label', '打开 X Keywords Blocker GitHub 仓库');
+    githubLink.innerHTML = `${icon('github', 18)}<span>GitHub 仓库</span>`;
+    $('.xmks-rail').insertBefore(githubLink, $('.xmks-railnote'));
     const run = $('#xmks-run');
     const stop = $('#xmks-stop');
     const remove = $('#xmks-delete');
@@ -379,7 +685,10 @@ const state = {
         updateHeader();
         return;
       }
-      presets.innerHTML = state.presetCategories.map((category) => `<section class="xmks-category"><div class="xmks-category-head"><div><div class="xmks-category-title">${escapeHtml(category.name)}</div></div><div class="xmks-category-count">${category.words.length} 个</div></div><div class="xmks-chips">${category.words.map((word) => `<button class="xmks-chip" type="button" data-word="${escapeHtml(word)}" data-selected="${state.presetSelected.has(word)}" aria-pressed="${state.presetSelected.has(word)}">${state.presetSelected.has(word) ? icon('check',15) : ''}${escapeHtml(word)}</button>`).join('')}</div></section>`).join('');
+      presets.innerHTML = state.presetCategories.map((category) => {
+        const collapsed = state.collapsedPresetCategories.has(category.name);
+        return `<section class="xmks-category" data-collapsed="${collapsed}"><button class="xmks-category-head" type="button" data-category="${escapeHtml(category.name)}" aria-expanded="${!collapsed}"><span class="xmks-category-title">${escapeHtml(category.name)}</span><span class="xmks-category-tail"><span class="xmks-category-count">${category.words.length} 个</span><span class="xmks-category-chevron">${icon('chevron', 17)}</span></span></button><div class="xmks-chips">${category.words.map((word) => `<button class="xmks-chip" type="button" data-word="${escapeHtml(word)}" data-selected="${state.presetSelected.has(word)}" aria-pressed="${state.presetSelected.has(word)}">${state.presetSelected.has(word) ? icon('check',15) : ''}${escapeHtml(word)}</button>`).join('')}</div></section>`;
+      }).join('');
       updateHeader();
     }
 
@@ -568,7 +877,20 @@ const state = {
     $('#xmks-sync').onclick = () => refreshPresets({ manual: true });
     $('#xmks-refresh').onclick = () => { if (!state.running) { state.listLoaded = false; loadList(); } };
     $('#xmks-clear-presets').onclick = () => { state.presetSelected.clear(); renderPresets(); };
-    presets.onclick = (event) => { const chip = event.target.closest('.xmks-chip'); if (!chip || state.running) return; const word = chip.dataset.word; state.presetSelected.has(word) ? state.presetSelected.delete(word) : state.presetSelected.add(word); renderPresets(); };
+    presets.onclick = (event) => {
+      const categoryToggle = event.target.closest('.xmks-category-head');
+      if (categoryToggle) {
+        const category = categoryToggle.dataset.category;
+        state.collapsedPresetCategories.has(category) ? state.collapsedPresetCategories.delete(category) : state.collapsedPresetCategories.add(category);
+        renderPresets();
+        return;
+      }
+      const chip = event.target.closest('.xmks-chip');
+      if (!chip || state.running) return;
+      const word = chip.dataset.word;
+      state.presetSelected.has(word) ? state.presetSelected.delete(word) : state.presetSelected.add(word);
+      renderPresets();
+    };
     stop.onclick = () => { if (state.running) { state.cancelRequested = true; setStatus('正在停止剩余任务…'); } };
     remove.onclick = () => openDelete([...state.selectedIds]);
     list.onclick = (event) => { if (event.target.closest('#xmks-empty-refresh')) { state.listLoaded = false; loadList(); return; } const checkbox = event.target.closest('.xmks-check'); if (checkbox && !state.running) { checkbox.checked ? state.selectedIds.add(checkbox.dataset.id) : state.selectedIds.delete(checkbox.dataset.id); remove.hidden = state.selectedIds.size === 0; } const button = event.target.closest('.xmks-single-delete'); if (button && !state.running) openDelete([button.dataset.id]); };
