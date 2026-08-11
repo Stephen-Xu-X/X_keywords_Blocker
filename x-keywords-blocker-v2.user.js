@@ -2,7 +2,7 @@
 // @name         X Keywords Blocker V2
 // @namespace    https://x.com/
 // @author       Stephen-Xu-X
-// @version      3.1.1
+// @version      3.1.2
 // @description  A safe, configurable workspace for adding, syncing, browsing, and deleting X muted keywords.
 // @match        https://x.com/*
 // @run-at       document-idle
@@ -268,6 +268,10 @@ const state = {
         .xmks-view::-webkit-scrollbar,.xmks-log::-webkit-scrollbar{width:6px;height:6px}
         .xmks-view::-webkit-scrollbar-thumb,.xmks-log::-webkit-scrollbar-thumb{border-radius:99px;background:transparent}
         .xmks-label,.xmks-legend{display:block;margin-bottom:8px;font-size:13px}
+        .xmks-input-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}
+        .xmks-input-head .xmks-label{margin:0}
+        .xmks-clear-input{padding:2px 0;border:0;background:transparent;color:var(--muted);font-size:12px;font-weight:750;cursor:pointer}
+        .xmks-clear-input:hover{color:var(--red);text-decoration:underline}
         .xmks-textarea,.xmks-search input,.xmks-token-draft{box-sizing:border-box;width:100%;outline:0}
         .xmks-textarea{resize:none;font:14px/1.6 ui-monospace,"Cascadia Code",monospace}
         .xmks-token-editor{display:flex;align-content:flex-start;align-items:flex-start;flex-wrap:wrap;gap:8px;min-height:116px;max-height:148px;overflow:auto;cursor:text}
@@ -569,12 +573,23 @@ const state = {
     const tokenDraft = document.createElement('input');
     tokenDraft.className = 'xmks-token-draft';
     tokenDraft.type = 'text';
-    tokenDraft.placeholder = '广告 VPN 推广 BTC，官方支持添加#hashtag进行屏蔽，具体规则请查看左侧功能栏下方的官方规则。';
+    tokenDraft.placeholder = '输入词语或短语，空格、回车、逗号会自动拆分';
     tokenDraft.setAttribute('aria-label', '输入屏蔽词或短语');
     tokenEditor.append(tokenList, tokenDraft);
     input.hidden = true;
-    input.previousElementSibling.id = 'xmks-input-label';
-    input.previousElementSibling.removeAttribute('for');
+    const inputLabel = input.previousElementSibling;
+    inputLabel.id = 'xmks-input-label';
+    inputLabel.removeAttribute('for');
+    const inputHead = document.createElement('div');
+    inputHead.className = 'xmks-input-head';
+    const clearInputButton = document.createElement('button');
+    clearInputButton.className = 'xmks-clear-input';
+    clearInputButton.type = 'button';
+    clearInputButton.textContent = '清空';
+    clearInputButton.title = '清空当前输入';
+    clearInputButton.setAttribute('aria-label', '清空当前输入');
+    inputHead.append(inputLabel, clearInputButton);
+    inputLabel.parentNode.insertBefore(inputHead, inputLabel);
     input.parentNode.insertBefore(tokenEditor, input);
     $('.xmks-hint span').textContent = '空格、回车、中英文逗号会自动生成词条';
     const railLinks = document.createElement('div');
@@ -710,6 +725,12 @@ const state = {
     const renderManualWords = () => {
       tokenList.innerHTML = manualWords.map((word, index) => `<span class="xmks-token-chip" data-index="${index}" title="双击重新编辑"><span>${escapeHtml(word)}</span><button class="xmks-token-remove" type="button" data-index="${index}" title="删除 ${escapeHtml(word)}" aria-label="删除 ${escapeHtml(word)}">${icon('close', 13)}</button></span>`).join('');
       syncManualInput();
+    };
+    clearInputButton.onclick = () => {
+      manualWords = [];
+      tokenDraft.value = '';
+      renderManualWords();
+      tokenDraft.focus();
     };
     const commitTokenDraft = ({ force = false } = {}) => {
       const value = tokenDraft.value;

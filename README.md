@@ -1,56 +1,53 @@
 # X Keywords Blocker
 
-一个运行在 `x.com` 页面内的 Tampermonkey 用户脚本，用于批量添加、查看和删除 X 屏蔽词。请求直接发送到 X，不经过第三方服务器。
+这是一个运行在 `x.com` 页面里的 Tampermonkey 用户脚本，用来批量添加、查看和删除 X 屏蔽词。
 
-当前发布脚本：`x-keywords-blocker-v2.user.js`。
+我写它是因为 X 中文区的评论里经常会遇到广告、引流、色情骚扰和投资诈骗内容。X 官方设置页一次只能添加一条词，词库稍微大一点，手工维护就会变成重复劳动。这个脚本把这部分操作放到一个小面板里，词条仍然由 X 账户自己管理，请求也只发往 X。
 
-## 脚本介绍
+## 安装
 
-X 原生设置页通常要求逐条添加屏蔽词。脚本把多个词条整理成队列，默认按 3000ms 间隔逐条调用 X 已加载的内部接口，并提供执行前参数确认、重复词预检查、停止剩余队列、失败项重试和删除管理。
+1. 安装 [Tampermonkey](https://www.tampermonkey.net/)。
+2. 打开脚本的 [Raw 安装地址](https://raw.githubusercontent.com/Stephen-Xu-X/X_keywords_Blocker/main/x-keywords-blocker-v2.user.js)，在 Tampermonkey 中确认安装。
+3. 打开已经登录的 [x.com](https://x.com/)。脚本图标会出现在 X 导航区域附近。
 
-脚本不内置屏蔽词，只从 GitHub Raw 读取 `keywords.md`。远程词库首次加载失败时保持空状态；已经成功加载过远程版本后，刷新失败会保留上一次成功版本。
+## 使用
 
-## 功能
+打开脚本面板后，可以从三个页面进入：
 
-- 远程词库：从 GitHub Raw 同步分类和词条。
-- 用户词库：读取当前 X 账户已有的屏蔽词。
-- 批量添加：支持换行、中文和英文逗号、分号分隔。
-- 参数确认：Home timeline、Notifications、From anyone、From people you don't follow，以及 Forever、24 hours、7 days、30 days。
-- 重复预检查：添加前读取已有词条，跳过规范化后重复的词。
-- 任务托盘：显示成功、已存在、失败和未执行队列。
-- 停止剩余任务：只阻止后续请求，不撤销已经发送的请求。
-- 删除管理：支持搜索、多选、单项删除、批量删除和失败重试。
-- 单字过滤：词库中的单字词不会进入可选列表，降低误杀风险。
+- **批量添加**：输入词条，选择屏蔽位置、来源和时长，确认后逐条发送。
+- **用户词库**：读取当前 X 账户已有的屏蔽词，可以搜索、筛选、批量选择和删除。
+- **远程词库**：从仓库的 `keywords.md` 同步分类词条，选择后批量添加。
 
-## 官方规则参考
+批量添加输入区支持普通空格、回车、换行和中英文逗号。输入分隔符后，词条会变成胶囊；单击胶囊右侧的 `×` 可以删除，双击词条可以重新编辑。远程词库中的多词短语会按词库文件原样保留。
 
-官方帮助页说明了 X 的高级屏蔽词选项。脚本中的参数对应关系如下：
+## 官方屏蔽选项
 
-| 官方选项 | 脚本请求值 |
+X 的官方帮助页允许为每个词或短语设置以下选项：
+
+| 设置 | 脚本值 |
 | --- | --- |
 | Home timeline | `home_timeline,tweet_replies` |
 | Notifications | `notifications` |
-| From anyone | `mute_options=` |
-| From people you don't follow | `mute_options=exclude_following_accounts` |
-| Forever | `duration=` |
-| 24 hours | `duration=86400000` |
-| 7 days | `duration=604800000` |
-| 30 days | `duration=2592000000` |
+| From anyone | 空的 `mute_options` |
+| From people you don't follow | `exclude_following_accounts` |
+| Forever | 空的 `duration` |
+| 24 hours | `86400000` |
+| 7 days | `604800000` |
+| 30 days | `2592000000` |
 
-官方参考：[Advanced X mute options](https://help.x.com/en/using-x/advanced-x-mute-options)
+官方说明：<https://help.x.com/en/using-x/advanced-x-mute-options>
 
-脚本只是把官方页面中的单条操作排成队列，不改变 X 的屏蔽范围、来源或时长语义。X 的网页界面和内部接口可能变化，使用时请控制批量规模并自行确认结果。
+X 的说明还提到：屏蔽词匹配不区分大小写，词条可以包含标点，也可以使用短语、用户名、表情符号和 hashtag。屏蔽主要影响通知和 Home timeline，通过搜索仍可能看到相关内容。具体行为以 X 当前页面为准。
 
 ## 词库格式
 
-词库只使用三级标题分类和列表词条：
+远程词库就是仓库根目录的 [`keywords.md`](./keywords.md)。文件只需要三级标题和带反引号的列表词条：
 
 ```markdown
 ### 广告引流
 
 - `蓝V互粉`
 - `涨粉`
-- `multi word phrase`
 
 ### 色情骚扰
 
@@ -58,48 +55,82 @@ X 原生设置页通常要求逐条添加屏蔽词。脚本把多个词条整理
 - `同城上门`
 ```
 
-规则：
+解析规则很简单：
 
-- `###` 表示分类名称。
-- 只有整行 `- \`词条\`` 会被加载。
-- 不使用四级标题或分类说明。
-- 单字词会被脚本过滤。
-- 远程词库地址：`https://raw.githubusercontent.com/Stephen-Xu-X/X_keywords_Blocker/main/keywords.md`
+- `###` 是分类名称。
+- 词库只读取两类内容：以 `### ` 开头的分类行，以及整行写成 `- \`词条\`` 或 `* \`词条\`` 的词条行。比如 `- \`广告\`` 会加载，普通句子、未加反引号的列表项和四级标题不会加载。
+- 同一个词只保留一次，大小写按规范化结果去重。
+- 单字词会被过滤，以减少误杀。
+- 分类说明、四级标题和其他普通文本不会进入词库。
+
+要维护自己的词库，可以编辑 `keywords.md`，提交到自己的仓库，再把脚本顶部的 `KEYWORDS_URL` 改成对应的 Raw 地址。脚本不会把词库写回 X 或其他服务器。
 
 ## 脚本原理
 
-1. Tampermonkey 在 `x.com` 页面注入 Shadow DOM 工作台，样式不会污染 X 页面。
-2. 脚本通过当前页面的 `ct0` 和 X 已加载的 webpack signing module 生成同源请求所需的 CSRF 与 transaction ID。
-3. 浏览器自动携带当前登录 Cookie；脚本不读取、不保存、不上传 `auth_token` 或其他账户凭证。
-4. 添加请求使用 X 的 `mutes/keywords/create.json`，列表使用 `list.json`，删除使用 `destroy.json`。
-5. 远程词库通过 Tampermonkey `GM.xmlHttpRequest` 读取 GitHub Raw，并使用严格 Markdown 解析器转换为分类和词条。
+脚本在已经登录的 `x.com` 页面中运行，并把界面放进 Shadow DOM，避免样式污染 X 页面。添加、列表和删除操作调用 X 页面正在使用的 muted keywords 接口；当前浏览器会话负责携带登录 Cookie，脚本只读取当前请求需要的 `ct0`，不保存或上传 `auth_token`、Cookie 或其他账户凭证。
 
-## 本地开发
+远程词库通过 Tampermonkey 的 `GM.xmlHttpRequest` 从 GitHub Raw 读取。批量任务会先读取现有词条，跳过规范化后已经存在的词，再按队列逐条请求。作者个人测试中，一个批次十几个到二十个词，在 `500ms` 间隔下可以完成添加和删除；这只是个人测试，不代表 X 官方保证，也不代表所有账户和网络环境都会得到相同结果。公开版本默认请求间隔为 `3000ms`，用于降低连续请求过快带来的风险。失败项可以重试，停止操作只阻止尚未发送的请求。
 
-需要 Node.js、Git 和 PowerShell 7。Windows PowerShell 5.1 不作为默认开发 Shell。
+## 可手动调整
 
-```powershell
-$PSVersionTable.PSVersion
-(Get-Command pwsh).Source
+以下调整适合熟悉 JavaScript 和 X 请求流程的开发者。普通使用不需要改动脚本。
 
-node --check .\x-keywords-blocker-v2.user.js
-git diff --check
-git status --short --branch
+### 调整请求间隔
 
-git add -- README.md keywords.md x-keywords-blocker-v2.user.js AGENTS.md
-git commit -m "Describe the change"
-git push origin main
+原代码：
+
+```javascript
+const DELAY = 3000;
 ```
 
-如果 Git 传输不可用，使用已认证的 `gh api` Contents API 更新明确文件，不要强制推送或重写远程历史。
+例如改成 5 秒：
+
+```javascript
+const DELAY = 5000;
+```
+
+数值单位是毫秒。间隔越短，连续请求越密集，越容易遇到限流或验证。
+
+### 调整屏蔽时长
+
+官方页面目前只提供 Forever、24 hours、7 days 和 30 days 这几个选项。请求中的 `duration` 参数实际按毫秒计算，因此也可以自行尝试其他数值。
+
+例如：
+
+```javascript
+duration: 86400
+```
+
+实测中，`86400` 可以表示约 24 分钟的屏蔽时长。这个值不属于官方界面提供的选项，X 是否接受、实际持续多久以及以后是否继续支持，都可能变化。可以自行测试，但不要把测试结果当成官方承诺。
+
+### 更换远程词库
+
+原代码：
+
+```javascript
+const KEYWORDS_URL = 'https://raw.githubusercontent.com/Stephen-Xu-X/X_keywords_Blocker/main/keywords.md';
+```
+
+替换成自己的 Raw 地址：
+
+```javascript
+const KEYWORDS_URL = 'https://raw.githubusercontent.com/<user>/<repo>/main/keywords.md';
+```
+
+不要为了排查普通问题修改 API 地址、签名路径、CSRF/header、请求参数、队列函数或重试逻辑。改错这些部分可能导致请求失败，也可能让账户遇到异常验证。
 
 ## Agent 开发入口
 
-项目级开发约束见 [AGENTS.md](./AGENTS.md)。其中包含后端请求逻辑不可变边界、Slush 设计参考、词库格式和单字过滤规则、PowerShell 7 验证指令，以及 Sol/Terra 协作流程。
+需要让 Codex、Claude 或其他代码 Agent 继续开发时，直接发送下面这段内容：
 
-## 安全与限制
+```text
+git clone https://github.com/Stephen-Xu-X/X_keywords_Blocker.git
+THEN READ ToAgents.md AND USE IT AS THE MUST-READ FILE BEFORE ANY SECONDARY DEVELOPMENT.
+```
 
-- Cookie 由浏览器自动携带，不写入脚本或仓库。
-- CSRF token 只用于当前 X 同源请求。
-- 不要在 Issue、日志或截图中提交 Cookie、`auth_token` 或 `ct0`。
-- 本项目使用 X 的内部 Web 接口，可能随 X 前端更新而变化。
+## 风险与限制
+
+- 这是一个个人维护的用户脚本，不是 X 官方扩展。
+- X 可能修改网页结构、内部接口、签名模块或限流规则，脚本因此可能失效。
+- 批量请求可能触发限流、要求验证、限制功能，甚至导致账号被锁定或封禁。请控制批次大小，并在 X 页面确认结果。
+- 使用前请遵守 X 服务条款和所在地区适用的法律法规。使用者自行承担操作后果。
