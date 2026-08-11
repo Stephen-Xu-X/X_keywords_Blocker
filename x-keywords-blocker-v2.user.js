@@ -2,7 +2,7 @@
 // @name         X Keywords Blocker V2
 // @namespace    https://x.com/
 // @author       Stephen-Xu-X
-// @version      3.1.2
+// @version      3.1.3
 // @description  A safe, configurable workspace for adding, syncing, browsing, and deleting X muted keywords.
 // @match        https://x.com/*
 // @run-at       document-idle
@@ -787,10 +787,19 @@ const state = {
 
     function positionLauncher() {
       const exact = document.querySelector('a[href="/home"][aria-label="X"], a[href="/home"][data-testid="AppTabBar_Home_Link"]');
-      const logo = exact || [...document.querySelectorAll('a[href="/home"]')].find((element) => element.getAttribute('aria-label') === 'X');
-      if (!logo) { launcher.hidden = true; return; }
-      const rect = logo.getBoundingClientRect();
+      const logo = exact || [...document.querySelectorAll('a[href="/home"], a[data-testid*="Home"]')].find((element) => {
+        const rect = element.getBoundingClientRect();
+        return rect.width > 0 && rect.height > 0;
+      });
       launcher.hidden = false;
+      if (!logo) {
+        launcher.style.left = 'auto';
+        launcher.style.right = '18px';
+        launcher.style.top = '72px';
+        return;
+      }
+      const rect = logo.getBoundingClientRect();
+      launcher.style.right = 'auto';
       launcher.style.left = `${Math.round(rect.right + 4)}px`;
       launcher.style.top = `${Math.round(rect.top + (rect.height - 40) / 2)}px`;
     }
