@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         X Keywords Blocker V2
 // @namespace    https://x.com/
-// @version      3.0.1
+// @version      3.1.0
 // @description  A safe, configurable workspace for adding, syncing, browsing, and deleting X muted keywords.
 // @match        https://x.com/*
 // @run-at       document-idle
@@ -71,10 +71,10 @@ const state = {
   const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
   const csrf = () => decodeURIComponent(document.cookie.match(/(?:^|; )ct0=([^;]+)/)?.[1] || '');
   const normalizeKeyword = (value) => String(value || '').trim().toLocaleLowerCase();
-  const parseWords = (text) => {
+  const uniqueWords = (values) => {
     const seen = new Set();
     const result = [];
-    for (const value of String(text).split(/[\n,，;；]+/).map((item) => item.trim()).filter(Boolean)) {
+    for (const value of values.map((item) => String(item).trim()).filter(Boolean)) {
       const key = normalizeKeyword(value);
       if (!seen.has(key)) { seen.add(key); result.push(value); }
     }
@@ -267,8 +267,14 @@ const state = {
         .xmks-view::-webkit-scrollbar,.xmks-log::-webkit-scrollbar{width:6px;height:6px}
         .xmks-view::-webkit-scrollbar-thumb,.xmks-log::-webkit-scrollbar-thumb{border-radius:99px;background:transparent}
         .xmks-label,.xmks-legend{display:block;margin-bottom:8px;font-size:13px}
-        .xmks-textarea,.xmks-search input{box-sizing:border-box;width:100%;outline:0}
+        .xmks-textarea,.xmks-search input,.xmks-token-draft{box-sizing:border-box;width:100%;outline:0}
         .xmks-textarea{resize:none;font:14px/1.6 ui-monospace,"Cascadia Code",monospace}
+        .xmks-token-editor{display:flex;align-content:flex-start;align-items:flex-start;flex-wrap:wrap;gap:8px;min-height:116px;max-height:148px;overflow:auto;cursor:text}
+        .xmks-token-chip{display:inline-flex;align-items:center;gap:5px;max-width:100%;min-height:30px;padding:3px 6px 3px 10px;border-radius:99px;font-weight:750;overflow-wrap:anywhere}
+        .xmks-token-remove{display:grid;place-items:center;width:20px;height:20px;padding:0;border:0;border-radius:50%;background:transparent;color:inherit;cursor:pointer;opacity:0;transition:background .16s,opacity .16s}
+        .xmks-token-chip:hover .xmks-token-remove,.xmks-token-remove:focus-visible{opacity:1}
+        .xmks-token-draft{flex:1 1 150px;min-width:110px;height:30px;padding:0 4px;border:0;background:transparent;color:inherit}
+        .xmks-token-draft::placeholder{color:#718294}
         .xmks-hint,.xmks-preset-tools,.xmks-toolbar,.xmks-category-head,.xmks-foot,.xmks-task-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
         .xmks-hint{margin-top:8px;font-size:12px}
         .xmks-options{display:grid;grid-template-columns:1fr 1fr}
@@ -289,10 +295,16 @@ const state = {
         .xmks-sync{display:flex;align-items:center;gap:8px;padding:0 12px}
         .xmks-dot{width:7px;height:7px;flex:0 0 auto;border-radius:50%;background:var(--green);box-shadow:0 0 0 3px rgb(19 138 91/.13)}
         .xmks-sync small{font-size:11px}
-        .xmks-search{position:relative;flex:1}
+        .xmks-search{position:relative;flex:1;min-width:180px}
         .xmks-search svg{position:absolute;left:11px;top:11px;color:var(--muted)}
         .xmks-search input{height:40px;padding:0 12px 0 38px}
         .xmks-list{min-height:0}
+        .xmks-manage-tools{position:sticky;z-index:2;top:-22px;margin:-22px -24px 14px;padding:18px 24px 12px;border-bottom:1px solid var(--line);background:rgb(248 251 255/.96);backdrop-filter:blur(10px)}
+        .xmks-toolbar{justify-content:flex-start}
+        .xmks-filterbar{display:flex;gap:7px;margin-top:10px;overflow-x:auto;scrollbar-width:none}
+        .xmks-filterbar::-webkit-scrollbar{display:none}
+        .xmks-filter{flex:0 0 auto;min-height:30px;padding:0 11px;border:1px solid var(--line);border-radius:99px;background:#fff;color:var(--muted);font-size:12px;font-weight:750;cursor:pointer}
+        .xmks-filter[data-active=true]{border-color:#101820;background:#101820;color:#fff}
         .xmks-row{display:grid;grid-template-columns:30px minmax(0,1fr) 38px;align-items:center;min-height:70px;border-bottom:1px solid var(--line)}
         .xmks-check{width:17px;height:17px}
         .xmks-word{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:750}
@@ -339,7 +351,7 @@ const state = {
         #xmks-launch:hover{background:var(--blue);color:#fff;box-shadow:0 7px 18px rgb(20 124 229/.3)}
         .xmks-overlay{padding:24px;background:rgb(16 24 32/.38);backdrop-filter:blur(8px)}
         .xmks-window{
-          grid-template-columns:188px minmax(520px,1fr) 300px;
+          grid-template-columns:176px minmax(520px,1fr) 300px;
           width:min(1280px,calc(100vw - 48px));
           height:min(720px,calc(100vh - 48px));
           border:1px solid #17212b;
@@ -348,11 +360,11 @@ const state = {
           box-shadow:0 24px 64px rgb(25 45 64/.28),0 4px 0 rgb(16 24 32/.08);
         }
         .xmks-rail{
-          padding:18px 12px 16px;
+          padding:16px 10px 14px;
           border-right:1px solid #17212b;
           background:#dceeff;
         }
-        .xmks-brand{gap:10px;padding:2px 8px 20px;color:#101820;font-size:15px}
+        .xmks-brand{gap:9px;padding:2px 7px 14px;color:#101820;font-size:15px}
         .xmks-brandmark{
           width:30px;
           height:30px;
@@ -363,9 +375,9 @@ const state = {
           box-shadow:2px 2px 0 #101820;
         }
         .xmks-tab{
-          min-height:44px;
-          margin:3px 0;
-          padding:0 12px;
+          min-height:42px;
+          margin:2px 0;
+          padding:0 10px;
           border:1px solid transparent;
           border-radius:12px;
           color:#425466;
@@ -377,9 +389,9 @@ const state = {
           display:flex;
           align-items:center;
           gap:9px;
-          min-height:40px;
-          margin-top:7px;
-          padding:0 10px;
+          min-height:36px;
+          margin-top:5px;
+          padding:0 8px;
           border:1px solid #101820;
           border-radius:999px;
           background:#fff;
@@ -391,7 +403,7 @@ const state = {
         }
         .xmks-rail-links{display:grid;gap:0;margin-top:auto}
         .xmks-rail-action:hover{background:var(--lavender);box-shadow:3px 3px 0 #101820;transform:translate(-1px,-1px)}
-        .xmks-railnote{margin-top:12px;padding:10px 8px 0;color:#52697d}
+        .xmks-railnote{margin-top:9px;padding:8px 7px 0;color:#52697d}
         .xmks-main{grid-template-rows:70px minmax(0,1fr) minmax(76px,auto);background:var(--bg)}
         .xmks-head{padding:0 24px;border-bottom:1px solid var(--line);background:#fff}
         .xmks-heading{font-size:21px;line-height:1.15}
@@ -402,11 +414,14 @@ const state = {
         .xmks-view:hover{scrollbar-color:#8da6bd transparent}
         .xmks-view:hover::-webkit-scrollbar-thumb,.xmks-log:hover::-webkit-scrollbar-thumb{background:#8da6bd}
         .xmks-label,.xmks-legend{color:#17212b;font-weight:800}
-        .xmks-textarea,.xmks-search input{border-color:#91a7bb;border-radius:10px;background:#fff;color:#101820;box-shadow:inset 0 1px 0 rgb(16 24 32/.03)}
+        .xmks-textarea,.xmks-search input,.xmks-token-editor{border:1px solid #91a7bb;border-radius:10px;background:#fff;color:#101820;box-shadow:inset 0 1px 0 rgb(16 24 32/.03)}
         .xmks-textarea{height:184px;padding:14px 15px}
-        .xmks-textarea:focus,.xmks-search input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgb(20 124 229/.14)}
+        .xmks-token-editor{padding:12px}
+        .xmks-token-editor:focus-within,.xmks-textarea:focus,.xmks-search input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgb(20 124 229/.14)}
+        .xmks-token-chip{background:#273746;color:#fff}
+        .xmks-token-remove:hover{background:rgb(255 255 255/.18)}
         .xmks-hint,.xmks-preset-tools{color:var(--muted)}
-        .xmks-options{gap:20px;margin-top:22px}
+        .xmks-options{grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:16px}
         .xmks-fieldset{padding:14px;border:1px solid var(--line);border-radius:12px;background:#fff}
         .xmks-dialog-card .xmks-fieldset{padding:12px}
         .xmks-option,.xmks-radio{min-height:32px;color:#283747}
@@ -414,7 +429,7 @@ const state = {
         .xmks-option input:checked+.xmks-switch{border-color:#101820;background:var(--blue)}
         .xmks-radio-mark{border-color:#7b90a4;background:#fff}
         .xmks-radio input:checked+.xmks-radio-mark{border-color:var(--blue)}
-        .xmks-segments{border-color:#91a7bb;border-radius:10px;background:#eaf2f9}
+        .xmks-segments{grid-template-columns:repeat(2,1fr);border-color:#91a7bb;border-radius:10px;background:#eaf2f9}
         .xmks-segments span{border-radius:7px;color:#526575}
         .xmks-segments input:checked+span{background:#fff;color:#101820;box-shadow:0 1px 4px rgb(37 61 82/.16)}
         .xmks-preset-tools{align-items:stretch;margin:0 0 18px}
@@ -452,7 +467,7 @@ const state = {
         .xmks-chip{min-height:32px;border:0;background:#273746;color:#fff;box-shadow:none}
         .xmks-chip:hover{background:#3b5063;transform:translateY(-1px)}
         .xmks-chip[data-selected=true]{border:0;background:var(--sun);color:#101820;box-shadow:none}
-        .xmks-toolbar{margin-bottom:16px}
+        .xmks-toolbar{margin-bottom:0}
         .xmks-list{overflow:hidden;border:1px solid var(--line);border-radius:12px;background:#fff}
         .xmks-row{padding:0 10px;border-bottom-color:#d8e2eb}
         .xmks-row:last-child{border-bottom:0}
@@ -463,7 +478,7 @@ const state = {
         .xmks-empty{color:#5c6b79}
         .xmks-task{height:100%;padding:18px 16px;border-left:1px solid #17212b;background:#eadcff}
         .xmks-task[data-dismissed=true]{display:none}
-        .xmks-window:has(.xmks-task[data-dismissed=true]){grid-template-columns:188px minmax(520px,1fr);width:min(980px,calc(100vw - 48px))}
+        .xmks-window:has(.xmks-task[data-dismissed=true]){grid-template-columns:176px minmax(520px,1fr);width:min(968px,calc(100vw - 48px))}
         .xmks-task-close{flex:0 0 auto;width:30px;height:30px}
         .xmks-task-summary{display:flex;align-items:center;justify-content:space-between;gap:8px}
         .xmks-task .xmks-progress{flex:0 0 auto}
@@ -497,10 +512,11 @@ const state = {
         .xmks-stat:nth-child(3){background:#e0f6eb}
         .xmks-stat strong{color:#101820}
         .xmks-error-list{color:#a51f18}
-        .xmks-focus:focus-visible,.xmks-btn:focus-visible,.xmks-iconbtn:focus-visible,.xmks-chip:focus-visible,.xmks-tab:focus-visible,.xmks-category-head:focus-visible,.xmks-rail-action:focus-visible,.xmks-option:has(input:focus-visible),.xmks-radio:has(input:focus-visible),.xmks-segments label:has(input:focus-visible){outline:3px solid rgb(20 124 229/.45);outline-offset:2px}
-        .xmks-view,.xmks-log,.xmks-confirm-words,.xmks-dialog-card{scrollbar-width:thin;scrollbar-color:#8da6bd transparent}
-        .xmks-view::-webkit-scrollbar-thumb,.xmks-log::-webkit-scrollbar-thumb,.xmks-confirm-words::-webkit-scrollbar-thumb,.xmks-dialog-card::-webkit-scrollbar-thumb{background:#8da6bd;border-radius:99px}
-        @media(max-width:1060px) and (min-width:721px){.xmks-window{grid-template-columns:176px minmax(430px,1fr) 260px}.xmks-window:has(.xmks-task[data-dismissed=true]){grid-template-columns:176px minmax(430px,1fr)}.xmks-task{padding:16px 13px}}
+        .xmks-focus:focus-visible,.xmks-btn:focus-visible,.xmks-iconbtn:focus-visible,.xmks-chip:focus-visible,.xmks-tab:focus-visible,.xmks-category-head:focus-visible,.xmks-rail-action:focus-visible,.xmks-filter:focus-visible,.xmks-option:has(input:focus-visible),.xmks-radio:has(input:focus-visible),.xmks-segments label:has(input:focus-visible){outline:3px solid rgb(20 124 229/.45);outline-offset:2px}
+        @media(min-width:721px) and (min-height:560px){.xmks-view[data-view-panel="add"]{overflow:hidden;padding-top:16px;padding-bottom:16px}}
+        .xmks-view,.xmks-log,.xmks-token-editor,.xmks-confirm-words,.xmks-dialog-card{scrollbar-width:thin;scrollbar-color:#8da6bd transparent}
+        .xmks-view::-webkit-scrollbar-thumb,.xmks-log::-webkit-scrollbar-thumb,.xmks-token-editor::-webkit-scrollbar-thumb,.xmks-confirm-words::-webkit-scrollbar-thumb,.xmks-dialog-card::-webkit-scrollbar-thumb{background:#8da6bd;border-radius:99px}
+        @media(max-width:1060px) and (min-width:721px){.xmks-window{grid-template-columns:164px minmax(430px,1fr) 250px}.xmks-window:has(.xmks-task[data-dismissed=true]){grid-template-columns:164px minmax(430px,1fr)}.xmks-task{padding:16px 13px}.xmks-options{gap:9px}.xmks-fieldset{padding:11px}.xmks-option,.xmks-radio{font-size:12px}}
         @media(max-width:720px){
           .xmks-overlay{place-items:end center;padding:0}
           .xmks-window{position:relative;grid-template-columns:1fr;width:100%;height:min(95dvh,820px);border-right:0;border-bottom:0;border-left:0;border-radius:18px 18px 0 0}
@@ -518,6 +534,8 @@ const state = {
           .xmks-preset-tools .xmks-btn{flex:1}
           .xmks-task{position:absolute;z-index:3;right:0;bottom:0;left:0;height:min(48dvh,390px);padding:16px;border:1px solid #17212b;border-bottom:0;border-radius:18px 18px 0 0;box-shadow:0 -12px 30px rgb(16 24 32/.2);transform:translateY(102%);transition:transform .2s ease}
           .xmks-task[data-show=true]:not([data-dismissed=true]){transform:none}
+          .xmks-manage-tools{top:-22px;margin-right:-16px;margin-left:-16px;padding-right:16px;padding-left:16px}
+          .xmks-toolbar{flex-wrap:wrap}
           .xmks-foot{padding:12px 16px calc(14px + env(safe-area-inset-bottom))}
           .xmks-status{display:none}
           .xmks-actions{width:100%}
@@ -539,6 +557,24 @@ const state = {
     const search = $('#xmks-search');
     const list = $('.xmks-list');
     const presets = $('.xmks-presets');
+    const tokenEditor = document.createElement('div');
+    tokenEditor.className = 'xmks-token-editor';
+    tokenEditor.setAttribute('role', 'group');
+    tokenEditor.setAttribute('aria-labelledby', 'xmks-input-label');
+    const tokenList = document.createElement('div');
+    tokenList.className = 'xmks-input-chips';
+    tokenList.style.display = 'contents';
+    const tokenDraft = document.createElement('input');
+    tokenDraft.className = 'xmks-token-draft';
+    tokenDraft.type = 'text';
+    tokenDraft.placeholder = '广告 VPN 推广 BTC，官方支持添加#hashtag进行屏蔽，具体规则请查看左侧功能栏下方的官方规则。';
+    tokenDraft.setAttribute('aria-label', '输入屏蔽词或短语');
+    tokenEditor.append(tokenList, tokenDraft);
+    input.hidden = true;
+    input.previousElementSibling.id = 'xmks-input-label';
+    input.previousElementSibling.removeAttribute('for');
+    input.parentNode.insertBefore(tokenEditor, input);
+    $('.xmks-hint span').textContent = '空格、回车、中英文逗号会自动生成词条';
     const railLinks = document.createElement('div');
     railLinks.className = 'xmks-rail-links';
     const developButton = document.createElement('button');
@@ -561,8 +597,48 @@ const state = {
     githubLink.title = '打开 GitHub 仓库';
     githubLink.setAttribute('aria-label', '打开 X Keywords Blocker GitHub 仓库');
     githubLink.innerHTML = `${icon('github', 18)}<span>GitHub 仓库</span>`;
-    railLinks.append(developButton, keywordsLink, githubLink);
+    const officialLink = document.createElement('a');
+    officialLink.className = 'xmks-rail-action';
+    officialLink.href = 'https://help.x.com/en/using-x/advanced-x-mute-options';
+    officialLink.target = '_blank';
+    officialLink.rel = 'noopener noreferrer';
+    officialLink.title = '查看 X 官方高级屏蔽规则';
+    officialLink.innerHTML = `${icon('alert', 18)}<span>官方规则</span>`;
+    railLinks.append(developButton, keywordsLink, officialLink, githubLink);
     $('.xmks-rail').insertBefore(railLinks, $('.xmks-railnote'));
+    const presetSelectAll = document.createElement('button');
+    presetSelectAll.className = 'xmks-btn';
+    presetSelectAll.id = 'xmks-select-all-presets';
+    presetSelectAll.type = 'button';
+    presetSelectAll.innerHTML = `${icon('check', 17)}全选`;
+    $('#xmks-clear-presets').before(presetSelectAll);
+    const manageToolbar = $('.xmks-toolbar');
+    const manageTools = document.createElement('div');
+    manageTools.className = 'xmks-manage-tools';
+    manageToolbar.parentNode.insertBefore(manageTools, manageToolbar);
+    const manageSelectAll = document.createElement('button');
+    manageSelectAll.className = 'xmks-btn';
+    manageSelectAll.id = 'xmks-select-all-manage';
+    manageSelectAll.type = 'button';
+    manageSelectAll.innerHTML = `${icon('check', 17)}全选`;
+    const refreshButton = $('#xmks-refresh');
+    refreshButton.classList.remove('xmks-iconbtn');
+    refreshButton.classList.add('xmks-btn');
+    refreshButton.innerHTML = `${icon('refresh', 17)}刷新`;
+    manageToolbar.prepend(refreshButton, manageSelectAll);
+    const filterBar = document.createElement('div');
+    filterBar.className = 'xmks-filterbar';
+    filterBar.setAttribute('aria-label', '按屏蔽条件筛选');
+    filterBar.innerHTML = [
+      ['all', '全部'],
+      ['home', 'Home timeline'],
+      ['notifications', 'Notifications'],
+      ['anyone', 'Anyone'],
+      ['non_following', 'People you don’t follow'],
+      ['forever', 'Forever'],
+      ['timed', '限时'],
+    ].map(([value, label]) => `<button class="xmks-filter" type="button" data-filter="${value}" data-active="${value === 'all'}">${label}</button>`).join('');
+    manageTools.append(manageToolbar, filterBar);
     const run = $('#xmks-run');
     const stop = $('#xmks-stop');
     const remove = $('#xmks-delete');
@@ -587,6 +663,8 @@ const state = {
     let pendingExisting = [];
     let deleteIds = [];
     let lastFocus = launcher;
+    let manualWords = [];
+    let manageFilter = 'all';
     const retryButton = document.createElement('button');
     retryButton.className = 'xmks-btn';
     retryButton.type = 'button';
@@ -623,6 +701,51 @@ const state = {
 
     const setStatus = (message) => { status.textContent = message; };
     const notify = (message, tone = 'info') => { toast.textContent = message; toast.dataset.tone = tone; toast.dataset.show = 'true'; clearTimeout(notify.timer); notify.timer = setTimeout(() => { toast.dataset.show = 'false'; }, 3200); };
+    const syncManualInput = () => {
+      input.value = manualWords.join('\n');
+      $('.xmks-count').textContent = `${manualWords.length} 个`;
+    };
+    const renderManualWords = () => {
+      tokenList.innerHTML = manualWords.map((word, index) => `<span class="xmks-token-chip" data-index="${index}" title="双击重新编辑"><span>${escapeHtml(word)}</span><button class="xmks-token-remove" type="button" data-index="${index}" title="删除 ${escapeHtml(word)}" aria-label="删除 ${escapeHtml(word)}">${icon('close', 13)}</button></span>`).join('');
+      syncManualInput();
+    };
+    const commitTokenDraft = ({ force = false } = {}) => {
+      const value = tokenDraft.value;
+      if (!force && !/[ \r\n,，]/u.test(value)) return;
+      const pieces = value.split(/[ \r\n,，]+/u);
+      const remainder = force || /[ \r\n,，]$/u.test(value) ? '' : pieces.pop() || '';
+      manualWords = uniqueWords([...manualWords, ...pieces]);
+      tokenDraft.value = remainder;
+      renderManualWords();
+    };
+    const visibleKeywords = () => {
+      const query = search.value.trim().toLocaleLowerCase();
+      return state.keywords.filter((item) => {
+        if (!String(item.keyword).toLocaleLowerCase().includes(query)) return false;
+        const surfaces = item.mute_surfaces || [];
+        const options = item.mute_options || [];
+        if (manageFilter === 'home') return surfaces.includes('home_timeline') || surfaces.includes('tweet_replies');
+        if (manageFilter === 'notifications') return surfaces.includes('notifications');
+        if (manageFilter === 'anyone') return !options.includes('exclude_following_accounts');
+        if (manageFilter === 'non_following') return options.includes('exclude_following_accounts');
+        if (manageFilter === 'forever') return !item.valid_until;
+        if (manageFilter === 'timed') return Boolean(item.valid_until);
+        return true;
+      });
+    };
+    const updateManageSelectAll = (shown = visibleKeywords()) => {
+      const allSelected = shown.length > 0 && shown.every((item) => state.selectedIds.has(item.id));
+      manageSelectAll.disabled = shown.length === 0 || state.running;
+      manageSelectAll.innerHTML = `${icon('check', 17)}${allSelected ? '取消全选' : '全选'}`;
+      manageSelectAll.setAttribute('aria-pressed', String(allSelected));
+    };
+    const updatePresetSelectAll = () => {
+      const words = state.presetCategories.flatMap((category) => category.words);
+      const allSelected = words.length > 0 && words.every((word) => state.presetSelected.has(word));
+      presetSelectAll.disabled = words.length === 0 || state.running;
+      presetSelectAll.innerHTML = `${icon('check', 17)}${allSelected ? '取消全选' : '全选'}`;
+      presetSelectAll.setAttribute('aria-pressed', String(allSelected));
+    };
     const setSyncState = (loading, label) => { const button = $('#xmks-sync'); button.disabled = loading; button.innerHTML = loading ? `${icon('refresh',17)}同步中…` : `${icon('refresh',17)}同步远程词库`; $('.xmks-source').textContent = label || state.presetSource; $('.xmks-sync-time').textContent = `${state.presetSyncedAt ? `最后同步 ${formatTime(state.presetSyncedAt)}` : '未同步'} · ${state.presetStats.words} 个`; };
     const updateHeader = () => { $('.xmks-subtitle').textContent = state.activeView === 'add' ? '检查参数后发送 · 每条请求间隔 0.5 秒' : state.activeView === 'presets' ? `${state.presetSelected.size} 个已选择 · ${state.presetSource}` : `${state.keywords.length} 个屏蔽词`; setSyncState(false); };
     const refreshPresets = ({ manual = false } = {}) => syncPresetCategories({
@@ -726,6 +849,7 @@ const state = {
     function renderPresets() {
       if (!state.presetCategories.length) {
         presets.innerHTML = '<div class="xmks-empty">远程词库尚未加载<br>请点击“同步远程词库”重试。</div>';
+        updatePresetSelectAll();
         updateHeader();
         return;
       }
@@ -733,13 +857,15 @@ const state = {
         const collapsed = state.collapsedPresetCategories.has(category.name);
         return `<section class="xmks-category" data-collapsed="${collapsed}"><button class="xmks-category-head" type="button" data-category="${escapeHtml(category.name)}" aria-expanded="${!collapsed}"><span class="xmks-category-title">${escapeHtml(category.name)}</span><span class="xmks-category-tail"><span class="xmks-category-count">${category.words.length} 个</span><span class="xmks-category-chevron">${icon('chevron', 17)}</span></span></button><div class="xmks-chips">${category.words.map((word) => `<button class="xmks-chip" type="button" data-word="${escapeHtml(word)}" data-selected="${state.presetSelected.has(word)}" aria-pressed="${state.presetSelected.has(word)}">${escapeHtml(word)}</button>`).join('')}</div></section>`;
       }).join('');
+      updatePresetSelectAll();
       updateHeader();
     }
 
     function renderList() {
       const query = search.value.trim().toLocaleLowerCase();
-      const shown = state.keywords.filter((item) => String(item.keyword).toLocaleLowerCase().includes(query));
-      if (!shown.length) { list.innerHTML = `<div class="xmks-empty">${query ? '没有匹配的屏蔽词' : '词库为空或尚未加载'}<br><button class="xmks-btn" id="xmks-empty-refresh">刷新账户列表</button></div>`; return; }
+      const shown = visibleKeywords();
+      updateManageSelectAll(shown);
+      if (!shown.length) { list.innerHTML = `<div class="xmks-empty">${query || manageFilter !== 'all' ? '没有匹配的屏蔽词' : '词库为空或尚未加载'}<br><button class="xmks-btn" id="xmks-empty-refresh">刷新账户列表</button></div>`; return; }
       list.innerHTML = shown.map((item) => `<div class="xmks-row"><input class="xmks-check" type="checkbox" data-id="${escapeHtml(item.id)}" aria-label="选择 ${escapeHtml(item.keyword)}" ${state.selectedIds.has(item.id) ? 'checked' : ''}><div class="xmks-wordblock"><div class="xmks-word" title="${escapeHtml(item.keyword)}">${escapeHtml(item.keyword)}</div><div class="xmks-meta">${keywordBadges(item)}</div></div><button class="xmks-iconbtn xmks-single-delete" type="button" data-id="${escapeHtml(item.id)}" title="删除 ${escapeHtml(item.keyword)}" aria-label="删除 ${escapeHtml(item.keyword)}">${icon('trash',17)}</button></div>`).join('');
     }
 
@@ -831,11 +957,10 @@ const state = {
       setStatus(state.cancelRequested ? `已停止剩余任务：成功 ${task.success}，未执行 ${remaining}` : `添加完成：新增 ${task.success}，已存在 ${task.duplicate}，失败 ${task.failed}`);
       notify(state.cancelRequested ? `已停止剩余任务，已发送请求不会撤销` : `完成：新增 ${task.success} 个`, state.cancelRequested ? 'info' : 'success');
       if (state.activeView === 'presets') { const retry = new Set(state.retryWords.map(normalizeKeyword)); state.presetSelected = new Set([...state.presetSelected].filter((word) => retry.has(normalizeKeyword(word)))); renderPresets(); }
-      if (state.activeView === 'manage') loadList({ silent: true });
     }
 
     async function openConfirm(words) {
-      pendingWords = parseWords(words.join('\n'));
+      pendingWords = uniqueWords(words);
       if (!pendingWords.length || state.running) return;
       if (!state.listLoaded) {
         await loadList({ silent: true });
@@ -917,10 +1042,62 @@ const state = {
     $('.xmks-close').onclick = () => { if (!state.running) setOverlay(false); else notify('任务进行中，请先停止剩余任务', 'info'); };
     overlay.onclick = (event) => { if (event.target === overlay && !state.running) setOverlay(false); };
     $$('.xmks-tab').forEach((element) => { element.onclick = () => switchView(element.dataset.view); });
-    input.oninput = () => { $('.xmks-count').textContent = `${parseWords(input.value).length} 个`; };
+    tokenEditor.onclick = (event) => {
+      const removeToken = event.target.closest('.xmks-token-remove');
+      if (removeToken) {
+        manualWords.splice(Number(removeToken.dataset.index), 1);
+        renderManualWords();
+        tokenDraft.focus();
+        return;
+      }
+      tokenDraft.focus();
+    };
+    tokenEditor.ondblclick = (event) => {
+      const chip = event.target.closest('.xmks-token-chip');
+      if (!chip || event.target.closest('.xmks-token-remove')) return;
+      const [word] = manualWords.splice(Number(chip.dataset.index), 1);
+      renderManualWords();
+      tokenDraft.value = word || '';
+      tokenDraft.focus();
+      tokenDraft.select();
+    };
+    tokenDraft.oninput = () => commitTokenDraft();
+    tokenDraft.onblur = () => commitTokenDraft({ force: true });
+    tokenDraft.onkeydown = (event) => {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        commitTokenDraft({ force: true });
+      } else if (event.key === 'Backspace' && !tokenDraft.value && manualWords.length) {
+        tokenDraft.value = manualWords.pop();
+        renderManualWords();
+      }
+    };
     search.oninput = renderList;
     $('#xmks-sync').onclick = () => refreshPresets({ manual: true });
     $('#xmks-refresh').onclick = () => { if (!state.running) { state.listLoaded = false; loadList(); } };
+    manageSelectAll.onclick = () => {
+      if (state.running) return;
+      const shown = visibleKeywords();
+      const allSelected = shown.length > 0 && shown.every((item) => state.selectedIds.has(item.id));
+      shown.forEach((item) => allSelected ? state.selectedIds.delete(item.id) : state.selectedIds.add(item.id));
+      renderList();
+      remove.hidden = state.activeView !== 'manage' || state.selectedIds.size === 0;
+    };
+    filterBar.onclick = (event) => {
+      const filter = event.target.closest('.xmks-filter');
+      if (!filter) return;
+      manageFilter = filter.dataset.filter;
+      filterBar.querySelectorAll('.xmks-filter').forEach((button) => { button.dataset.active = String(button === filter); });
+      renderList();
+    };
+    presetSelectAll.onclick = () => {
+      if (state.running) return;
+      const words = state.presetCategories.flatMap((category) => category.words);
+      const allSelected = words.length > 0 && words.every((word) => state.presetSelected.has(word));
+      state.presetSelected.clear();
+      if (!allSelected) words.forEach((word) => state.presetSelected.add(word));
+      renderPresets();
+    };
     $('#xmks-clear-presets').onclick = () => { state.presetSelected.clear(); renderPresets(); };
     presets.onclick = (event) => {
       const categoryToggle = event.target.closest('.xmks-category-head');
@@ -938,8 +1115,8 @@ const state = {
     };
     stop.onclick = () => { if (state.running) { state.cancelRequested = true; setStatus('正在停止剩余任务…'); } };
     remove.onclick = () => openDelete([...state.selectedIds]);
-    list.onclick = (event) => { if (event.target.closest('#xmks-empty-refresh')) { state.listLoaded = false; loadList(); return; } const checkbox = event.target.closest('.xmks-check'); if (checkbox && !state.running) { checkbox.checked ? state.selectedIds.add(checkbox.dataset.id) : state.selectedIds.delete(checkbox.dataset.id); remove.hidden = state.selectedIds.size === 0; } const button = event.target.closest('.xmks-single-delete'); if (button && !state.running) openDelete([button.dataset.id]); };
-    run.onclick = async () => { const words = state.activeView === 'presets' ? [...state.presetSelected] : parseWords(input.value); if (!words.length) { notify('请先输入或选择屏蔽词', 'error'); return; } await openConfirm(words); };
+    list.onclick = (event) => { if (event.target.closest('#xmks-empty-refresh')) { state.listLoaded = false; loadList(); return; } const checkbox = event.target.closest('.xmks-check'); if (checkbox && !state.running) { checkbox.checked ? state.selectedIds.add(checkbox.dataset.id) : state.selectedIds.delete(checkbox.dataset.id); remove.hidden = state.selectedIds.size === 0; updateManageSelectAll(); } const button = event.target.closest('.xmks-single-delete'); if (button && !state.running) openDelete([button.dataset.id]); };
+    run.onclick = async () => { if (state.activeView !== 'presets') commitTokenDraft({ force: true }); const words = state.activeView === 'presets' ? [...state.presetSelected] : [...manualWords]; if (!words.length) { notify('请先输入或选择屏蔽词', 'error'); return; } await openConfirm(words); };
     $('#xmks-confirm-cancel').onclick = () => showModal('#xmks-confirm', false);
     $('#xmks-confirm-run').onclick = confirmAdd;
     $('#xmks-delete-cancel').onclick = () => showModal('#xmks-delete-modal', false);
@@ -959,6 +1136,7 @@ const state = {
       if (event.shiftKey && shadow.activeElement === first) { event.preventDefault(); last.focus(); }
       else if (!event.shiftKey && shadow.activeElement === last) { event.preventDefault(); first.focus(); }
     });
+    renderManualWords();
     renderPresets();
     refreshPresets();
   }
