@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         X Keywords Blocker V2
 // @namespace    https://x.com/
-// @version      2.1.0
+// @version      3.0.0
 // @description  A safe, configurable workspace for adding, syncing, browsing, and deleting X muted keywords.
 // @match        https://x.com/*
 // @run-at       document-idle
@@ -295,13 +295,12 @@ const state = {
         .xmks-meta{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
         .xmks-badge{min-height:22px;padding:2px 8px;font-size:11px}
         .xmks-empty{display:grid;place-items:center;min-height:240px;text-align:center}
-        .xmks-task{display:none}
-        .xmks-task[data-show=true]{display:block}
+        .xmks-task{display:flex;flex-direction:column;min-width:0;min-height:0}
         .xmks-task-title{font-weight:750}
         .xmks-task-meta{color:var(--muted);font-size:12px}
         .xmks-progress{height:5px;margin:10px 0;border-radius:99px;overflow:hidden}
         .xmks-bar{height:100%;width:0;border-radius:99px;transition:width .2s}
-        .xmks-log{max-height:82px;overflow:auto;font:12px/1.5 ui-monospace,"Cascadia Code",monospace;white-space:pre-wrap}
+        .xmks-log{min-height:0;overflow:auto;font:12px/1.55 ui-monospace,"Cascadia Code",monospace;white-space:pre-wrap}
         .xmks-foot{min-width:0}
         .xmks-status{min-width:0;overflow:hidden;font-size:12px;text-overflow:ellipsis;white-space:nowrap}
         .xmks-actions{display:flex}
@@ -335,8 +334,8 @@ const state = {
         #xmks-launch:hover{background:var(--blue);color:#fff;box-shadow:0 7px 18px rgb(20 124 229/.3)}
         .xmks-overlay{padding:24px;background:rgb(16 24 32/.38);backdrop-filter:blur(8px)}
         .xmks-window{
-          grid-template-columns:188px minmax(0,1fr);
-          width:min(980px,calc(100vw - 48px));
+          grid-template-columns:188px minmax(520px,1fr) 300px;
+          width:min(1280px,calc(100vw - 48px));
           height:min(720px,calc(100vh - 48px));
           border:1px solid #17212b;
           border-radius:20px;
@@ -369,12 +368,12 @@ const state = {
         }
         .xmks-tab:hover{border-color:#7aaee0;background:rgb(255 255 255/.62);color:#101820}
         .xmks-tab[data-active=true]{border-color:#101820;background:#fff;color:#101820;box-shadow:3px 3px 0 #101820}
-        .xmks-github{
+        .xmks-rail-action{
           display:flex;
           align-items:center;
           gap:9px;
           min-height:40px;
-          margin-top:auto;
+          margin-top:7px;
           padding:0 10px;
           border:1px solid #101820;
           border-radius:999px;
@@ -385,9 +384,10 @@ const state = {
           text-decoration:none;
           transition:transform .16s,box-shadow .16s,background .16s;
         }
-        .xmks-github:hover{background:var(--lavender);box-shadow:3px 3px 0 #101820;transform:translate(-1px,-1px)}
+        .xmks-rail-links{display:grid;gap:0;margin-top:auto}
+        .xmks-rail-action:hover{background:var(--lavender);box-shadow:3px 3px 0 #101820;transform:translate(-1px,-1px)}
         .xmks-railnote{margin-top:12px;padding:10px 8px 0;color:#52697d}
-        .xmks-main{grid-template-rows:70px minmax(0,1fr) auto minmax(76px,auto);background:var(--bg)}
+        .xmks-main{grid-template-rows:70px minmax(0,1fr) minmax(76px,auto);background:var(--bg)}
         .xmks-head{padding:0 24px;border-bottom:1px solid var(--line);background:#fff}
         .xmks-heading{font-size:21px;line-height:1.15}
         .xmks-subtitle{color:var(--muted)}
@@ -444,9 +444,9 @@ const state = {
         .xmks-category-head[aria-expanded=true] .xmks-category-chevron{transform:rotate(90deg)}
         .xmks-chips{gap:8px;margin:0;padding:14px}
         .xmks-category[data-collapsed=true] .xmks-chips{display:none}
-        .xmks-chip{min-height:32px;border-color:#8ca0b3;background:#273746;color:#fff;box-shadow:none}
-        .xmks-chip:hover{border-color:#101820;background:#3b5063;transform:translateY(-1px)}
-        .xmks-chip[data-selected=true]{border-color:#101820;background:var(--sun);color:#101820;box-shadow:2px 2px 0 #101820}
+        .xmks-chip{min-height:32px;border:0;background:#273746;color:#fff;box-shadow:none}
+        .xmks-chip:hover{background:#3b5063;transform:translateY(-1px)}
+        .xmks-chip[data-selected=true]{border:0;background:var(--sun);color:#101820;box-shadow:none}
         .xmks-toolbar{margin-bottom:16px}
         .xmks-list{overflow:hidden;border:1px solid var(--line);border-radius:12px;background:#fff}
         .xmks-row{padding:0 10px;border-bottom-color:#d8e2eb}
@@ -456,7 +456,14 @@ const state = {
         .xmks-badge-blue{border-color:#79afe0;background:#dceeff;color:#185b98}
         .xmks-badge-time{border-color:#d2b84f;background:#fff4b8;color:#715d08}
         .xmks-empty{color:#5c6b79}
-        .xmks-task{margin:0 24px;padding:14px 16px;border:1px solid #17212b;border-radius:12px;background:#e9dcff;box-shadow:2px 2px 0 #17212b}
+        .xmks-task{height:100%;padding:18px 16px;border-left:1px solid #17212b;background:#eadcff}
+        .xmks-task[data-dismissed=true]{display:none}
+        .xmks-window:has(.xmks-task[data-dismissed=true]){grid-template-columns:188px minmax(520px,1fr);width:min(980px,calc(100vw - 48px))}
+        .xmks-task-close{flex:0 0 auto;width:30px;height:30px}
+        .xmks-task-summary{display:flex;align-items:center;justify-content:space-between;gap:8px}
+        .xmks-task .xmks-progress{flex:0 0 auto}
+        .xmks-task .xmks-log{flex:1;padding-right:5px;scrollbar-color:#8b78a7 transparent}
+        .xmks-task .xmks-btn{align-self:flex-start;margin-top:10px}
         .xmks-progress{background:#c8b4e5}
         .xmks-bar{background:var(--blue)}
         .xmks-log{color:#4f4562}
@@ -485,24 +492,27 @@ const state = {
         .xmks-stat:nth-child(3){background:#e0f6eb}
         .xmks-stat strong{color:#101820}
         .xmks-error-list{color:#a51f18}
-        .xmks-focus:focus-visible,.xmks-btn:focus-visible,.xmks-iconbtn:focus-visible,.xmks-chip:focus-visible,.xmks-tab:focus-visible,.xmks-category-head:focus-visible,.xmks-github:focus-visible,.xmks-option:has(input:focus-visible),.xmks-radio:has(input:focus-visible),.xmks-segments label:has(input:focus-visible){outline:3px solid rgb(20 124 229/.45);outline-offset:2px}
+        .xmks-focus:focus-visible,.xmks-btn:focus-visible,.xmks-iconbtn:focus-visible,.xmks-chip:focus-visible,.xmks-tab:focus-visible,.xmks-category-head:focus-visible,.xmks-rail-action:focus-visible,.xmks-option:has(input:focus-visible),.xmks-radio:has(input:focus-visible),.xmks-segments label:has(input:focus-visible){outline:3px solid rgb(20 124 229/.45);outline-offset:2px}
+        .xmks-view,.xmks-log,.xmks-confirm-words,.xmks-dialog-card{scrollbar-width:thin;scrollbar-color:#8da6bd transparent}
+        .xmks-view::-webkit-scrollbar-thumb,.xmks-log::-webkit-scrollbar-thumb,.xmks-confirm-words::-webkit-scrollbar-thumb,.xmks-dialog-card::-webkit-scrollbar-thumb{background:#8da6bd;border-radius:99px}
+        @media(max-width:1060px) and (min-width:721px){.xmks-window{grid-template-columns:176px minmax(430px,1fr) 260px}.xmks-window:has(.xmks-task[data-dismissed=true]){grid-template-columns:176px minmax(430px,1fr)}.xmks-task{padding:16px 13px}}
         @media(max-width:720px){
           .xmks-overlay{place-items:end center;padding:0}
-          .xmks-window{grid-template-columns:1fr;width:100%;height:min(95dvh,820px);border-right:0;border-bottom:0;border-left:0;border-radius:18px 18px 0 0}
+          .xmks-window{position:relative;grid-template-columns:1fr;width:100%;height:min(95dvh,820px);border-right:0;border-bottom:0;border-left:0;border-radius:18px 18px 0 0}
           .xmks-rail{display:flex;flex-direction:row;align-items:center;gap:8px;padding:10px 12px;border-right:0;border-bottom:1px solid #17212b;background:#dceeff}
           .xmks-brand,.xmks-railnote{display:none}
           .xmks-rail nav{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));flex:1;gap:6px;min-width:0}
-          .xmks-github{display:grid;place-items:center;flex:0 0 42px;width:42px;min-height:42px;margin:0;padding:0;border-radius:12px}
-          .xmks-github span{display:none}
+          .xmks-rail-links{display:none}
           .xmks-tab{justify-content:center;min-height:42px;padding:0 6px;font-size:12px}
-          .xmks-main{grid-template-rows:64px minmax(0,1fr) auto minmax(78px,auto)}
+          .xmks-main{grid-template-rows:64px minmax(0,1fr) minmax(78px,auto)}
           .xmks-head,.xmks-view{padding-left:16px;padding-right:16px}
           .xmks-options{grid-template-columns:1fr}
           .xmks-segments{grid-template-columns:repeat(2,1fr)}
           .xmks-preset-tools{flex-direction:column}
           .xmks-preset-tools .xmks-actions{justify-content:stretch}
           .xmks-preset-tools .xmks-btn{flex:1}
-          .xmks-task{margin:0 16px}
+          .xmks-task{position:absolute;z-index:3;right:0;bottom:0;left:0;height:min(48dvh,390px);padding:16px;border:1px solid #17212b;border-bottom:0;border-radius:18px 18px 0 0;box-shadow:0 -12px 30px rgb(16 24 32/.2);transform:translateY(102%);transition:transform .2s ease}
+          .xmks-task[data-show=true]:not([data-dismissed=true]){transform:none}
           .xmks-foot{padding:12px 16px calc(14px + env(safe-area-inset-bottom))}
           .xmks-status{display:none}
           .xmks-actions{width:100%}
@@ -524,20 +534,43 @@ const state = {
     const search = $('#xmks-search');
     const list = $('.xmks-list');
     const presets = $('.xmks-presets');
+    const railLinks = document.createElement('div');
+    railLinks.className = 'xmks-rail-links';
+    const developButton = document.createElement('button');
+    developButton.className = 'xmks-rail-action';
+    developButton.type = 'button';
+    developButton.title = '复制继续开发提示词';
+    developButton.innerHTML = `${icon('plus', 18)}<span>继续开发</span>`;
+    const keywordsLink = document.createElement('a');
+    keywordsLink.className = 'xmks-rail-action';
+    keywordsLink.href = KEYWORDS_URL.replace('raw.githubusercontent.com', 'github.com').replace('/main/', '/blob/main/');
+    keywordsLink.target = '_blank';
+    keywordsLink.rel = 'noopener noreferrer';
+    keywordsLink.title = '打开当前远程 keywords.md';
+    keywordsLink.innerHTML = `${icon('library', 18)}<span>当前词库</span>`;
     const githubLink = document.createElement('a');
-    githubLink.className = 'xmks-github';
+    githubLink.className = 'xmks-rail-action';
     githubLink.href = 'https://github.com/Stephen-Xu-X/X_keywords_Blocker';
     githubLink.target = '_blank';
     githubLink.rel = 'noopener noreferrer';
     githubLink.title = '打开 GitHub 仓库';
     githubLink.setAttribute('aria-label', '打开 X Keywords Blocker GitHub 仓库');
     githubLink.innerHTML = `${icon('github', 18)}<span>GitHub 仓库</span>`;
-    $('.xmks-rail').insertBefore(githubLink, $('.xmks-railnote'));
+    railLinks.append(developButton, keywordsLink, githubLink);
+    $('.xmks-rail').insertBefore(railLinks, $('.xmks-railnote'));
     const run = $('#xmks-run');
     const stop = $('#xmks-stop');
     const remove = $('#xmks-delete');
     const status = $('.xmks-status');
     const taskPanel = $('#xmks-task');
+    const taskClose = document.createElement('button');
+    taskClose.className = 'xmks-iconbtn xmks-task-close';
+    taskClose.type = 'button';
+    taskClose.title = '关闭任务结果';
+    taskClose.setAttribute('aria-label', '关闭任务结果');
+    taskClose.innerHTML = icon('close', 17);
+    $('.xmks-task-head').appendChild(taskClose);
+    $('.xmks-window').appendChild(taskPanel);
     const toast = $('.xmks-toast');
     $('.xmks-source').textContent = state.presetSource;
     $('#xmks-confirm').inert = true;
@@ -594,6 +627,12 @@ const state = {
       onFailed: (error) => notify(`同步失败，已保留当前词库：${error.message}`, 'error'),
       onNotify: notify,
     });
+    developButton.onclick = async () => {
+      const prompt = `继续开发 X Keywords Blocker。项目仓库：https://github.com/Stephen-Xu-X/X_keywords_Blocker\n当前脚本：x-keywords-blocker-v2.user.js\n请先读取项目 AGENTS.md，严格保持后端 API、签名、请求映射、500ms 队列、停止、重试和结果计数语义不变，仅在明确任务范围内修改。`;
+      try { await navigator.clipboard.writeText(prompt); notify('继续开发提示词已复制', 'success'); }
+      catch { notify('浏览器未允许写入剪贴板', 'error'); }
+    };
+    taskClose.onclick = () => { taskPanel.dataset.dismissed = 'true'; };
 
     function positionLauncher() {
       const exact = document.querySelector('a[href="/home"][aria-label="X"], a[href="/home"][data-testid="AppTabBar_Home_Link"]');
@@ -687,7 +726,7 @@ const state = {
       }
       presets.innerHTML = state.presetCategories.map((category) => {
         const collapsed = state.collapsedPresetCategories.has(category.name);
-        return `<section class="xmks-category" data-collapsed="${collapsed}"><button class="xmks-category-head" type="button" data-category="${escapeHtml(category.name)}" aria-expanded="${!collapsed}"><span class="xmks-category-title">${escapeHtml(category.name)}</span><span class="xmks-category-tail"><span class="xmks-category-count">${category.words.length} 个</span><span class="xmks-category-chevron">${icon('chevron', 17)}</span></span></button><div class="xmks-chips">${category.words.map((word) => `<button class="xmks-chip" type="button" data-word="${escapeHtml(word)}" data-selected="${state.presetSelected.has(word)}" aria-pressed="${state.presetSelected.has(word)}">${state.presetSelected.has(word) ? icon('check',15) : ''}${escapeHtml(word)}</button>`).join('')}</div></section>`;
+        return `<section class="xmks-category" data-collapsed="${collapsed}"><button class="xmks-category-head" type="button" data-category="${escapeHtml(category.name)}" aria-expanded="${!collapsed}"><span class="xmks-category-title">${escapeHtml(category.name)}</span><span class="xmks-category-tail"><span class="xmks-category-count">${category.words.length} 个</span><span class="xmks-category-chevron">${icon('chevron', 17)}</span></span></button><div class="xmks-chips">${category.words.map((word) => `<button class="xmks-chip" type="button" data-word="${escapeHtml(word)}" data-selected="${state.presetSelected.has(word)}" aria-pressed="${state.presetSelected.has(word)}">${escapeHtml(word)}</button>`).join('')}</div></section>`;
       }).join('');
       updateHeader();
     }
@@ -721,6 +760,7 @@ const state = {
 
     function setTask(task) {
       state.task = task;
+      taskPanel.dataset.dismissed = 'false';
       taskPanel.dataset.show = 'true';
       $('.xmks-task-title').textContent = task.title;
       $('.xmks-task-meta').textContent = `${task.completed}/${task.total} · 成功 ${task.success} · 已存在 ${task.duplicate} · 失败 ${task.failed} · 未执行 ${Math.max(0, task.total - task.completed)}`;
