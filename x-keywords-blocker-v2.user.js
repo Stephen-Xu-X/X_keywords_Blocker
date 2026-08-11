@@ -351,7 +351,7 @@ const state = {
         #xmks-launch:hover{background:var(--blue);color:#fff;box-shadow:0 7px 18px rgb(20 124 229/.3)}
         .xmks-overlay{padding:24px;background:rgb(16 24 32/.38);backdrop-filter:blur(8px)}
         .xmks-window{
-          grid-template-columns:176px minmax(520px,1fr) 300px;
+          grid-template-columns:140px minmax(520px,1fr) 300px;
           width:min(1280px,calc(100vw - 48px));
           height:min(720px,calc(100vh - 48px));
           border:1px solid #17212b;
@@ -360,14 +360,14 @@ const state = {
           box-shadow:0 24px 64px rgb(25 45 64/.28),0 4px 0 rgb(16 24 32/.08);
         }
         .xmks-rail{
-          padding:16px 10px 14px;
+          padding:16px 8px 14px;
           border-right:1px solid #17212b;
           background:#dceeff;
         }
-        .xmks-brand{gap:9px;padding:2px 7px 14px;color:#101820;font-size:15px}
+        .xmks-brand{gap:8px;padding:2px 5px 14px;color:#101820;font-size:14px;white-space:nowrap}
         .xmks-brandmark{
-          width:30px;
-          height:30px;
+          width:28px;
+          height:28px;
           border:1px solid #101820;
           border-radius:9px;
           background:var(--sun);
@@ -377,7 +377,8 @@ const state = {
         .xmks-tab{
           min-height:42px;
           margin:2px 0;
-          padding:0 10px;
+          gap:7px;
+          padding:0 7px;
           border:1px solid transparent;
           border-radius:12px;
           color:#425466;
@@ -388,10 +389,10 @@ const state = {
         .xmks-rail-action{
           display:flex;
           align-items:center;
-          gap:9px;
+          gap:7px;
           min-height:36px;
           margin-top:5px;
-          padding:0 8px;
+          padding:0 7px;
           border:1px solid #101820;
           border-radius:999px;
           background:#fff;
@@ -403,7 +404,7 @@ const state = {
         }
         .xmks-rail-links{display:grid;gap:0;margin-top:auto}
         .xmks-rail-action:hover{background:var(--lavender);box-shadow:3px 3px 0 #101820;transform:translate(-1px,-1px)}
-        .xmks-railnote{margin-top:9px;padding:8px 7px 0;color:#52697d}
+        .xmks-railnote{margin-top:9px;padding:8px 5px 0;color:#52697d}
         .xmks-main{grid-template-rows:70px minmax(0,1fr) minmax(76px,auto);background:var(--bg)}
         .xmks-head{padding:0 24px;border-bottom:1px solid var(--line);background:#fff}
         .xmks-heading{font-size:21px;line-height:1.15}
@@ -478,7 +479,7 @@ const state = {
         .xmks-empty{color:#5c6b79}
         .xmks-task{height:100%;padding:18px 16px;border-left:1px solid #17212b;background:#eadcff}
         .xmks-task[data-dismissed=true]{display:none}
-        .xmks-window:has(.xmks-task[data-dismissed=true]){grid-template-columns:176px minmax(520px,1fr);width:min(968px,calc(100vw - 48px))}
+        .xmks-window:has(.xmks-task[data-dismissed=true]){grid-template-columns:140px minmax(520px,1fr);width:min(932px,calc(100vw - 48px))}
         .xmks-task-close{flex:0 0 auto;width:30px;height:30px}
         .xmks-task-summary{display:flex;align-items:center;justify-content:space-between;gap:8px}
         .xmks-task .xmks-progress{flex:0 0 auto}
@@ -516,7 +517,7 @@ const state = {
         @media(min-width:721px) and (min-height:560px){.xmks-view[data-view-panel="add"]{overflow:hidden;padding-top:16px;padding-bottom:16px}}
         .xmks-view,.xmks-log,.xmks-token-editor,.xmks-confirm-words,.xmks-dialog-card{scrollbar-width:thin;scrollbar-color:#8da6bd transparent}
         .xmks-view::-webkit-scrollbar-thumb,.xmks-log::-webkit-scrollbar-thumb,.xmks-token-editor::-webkit-scrollbar-thumb,.xmks-confirm-words::-webkit-scrollbar-thumb,.xmks-dialog-card::-webkit-scrollbar-thumb{background:#8da6bd;border-radius:99px}
-        @media(max-width:1060px) and (min-width:721px){.xmks-window{grid-template-columns:164px minmax(430px,1fr) 250px}.xmks-window:has(.xmks-task[data-dismissed=true]){grid-template-columns:164px minmax(430px,1fr)}.xmks-task{padding:16px 13px}.xmks-options{gap:9px}.xmks-fieldset{padding:11px}.xmks-option,.xmks-radio{font-size:12px}}
+        @media(max-width:1060px) and (min-width:721px){.xmks-window{grid-template-columns:140px minmax(430px,1fr) 250px}.xmks-window:has(.xmks-task[data-dismissed=true]){grid-template-columns:140px minmax(430px,1fr)}.xmks-task{padding:16px 13px}.xmks-options{gap:9px}.xmks-fieldset{padding:11px}.xmks-option,.xmks-radio{font-size:12px}}
         @media(max-width:720px){
           .xmks-overlay{place-items:end center;padding:0}
           .xmks-window{position:relative;grid-template-columns:1fr;width:100%;height:min(95dvh,820px);border-right:0;border-bottom:0;border-left:0;border-radius:18px 18px 0 0}
