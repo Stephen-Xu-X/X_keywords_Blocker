@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         X Keywords Blocker V2
 // @namespace    https://x.com/
-// @version      3.0.0
+// @version      3.0.1
 // @description  A safe, configurable workspace for adding, syncing, browsing, and deleting X muted keywords.
 // @match        https://x.com/*
 // @run-at       document-idle
@@ -93,8 +93,13 @@ const state = {
     for (const rawLine of String(markdown).split(/\r?\n/)) {
       const line = rawLine.trim();
       if (line.startsWith('### ')) {
-        current = { name: line.slice(4).trim(), words: [] };
-        categories.push(current);
+        const rawName = line.slice(4).trim();
+        const name = rawName.replace(/^[A-Z]\s+(?:默认|自选)\s*[·•:：-]\s*/i, '').trim() || rawName;
+        current = categories.find((category) => normalizeKeyword(category.name) === normalizeKeyword(name));
+        if (!current) {
+          current = { name, words: [] };
+          categories.push(current);
+        }
         continue;
       }
       if (!current) continue;
