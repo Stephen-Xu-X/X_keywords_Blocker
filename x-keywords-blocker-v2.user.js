@@ -2,7 +2,7 @@
 // @name         X Keywords Blocker V2
 // @namespace    https://x.com/
 // @author       Stephen-Xu-X
-// @version      3.1.3
+// @version      3.1.4
 // @description  A safe, configurable workspace for adding, syncing, browsing, and deleting X muted keywords.
 // @match        https://x.com/*
 // @run-at       document-idle
@@ -588,8 +588,9 @@ const state = {
     clearInputButton.textContent = '清空';
     clearInputButton.title = '清空当前输入';
     clearInputButton.setAttribute('aria-label', '清空当前输入');
+    const inputParent = inputLabel.parentNode;
+    inputParent.insertBefore(inputHead, inputLabel);
     inputHead.append(inputLabel, clearInputButton);
-    inputLabel.parentNode.insertBefore(inputHead, inputLabel);
     input.parentNode.insertBefore(tokenEditor, input);
     $('.xmks-hint span').textContent = '空格、回车、中英文逗号会自动生成词条';
     const railLinks = document.createElement('div');
